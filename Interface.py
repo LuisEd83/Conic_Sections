@@ -2,6 +2,20 @@
 #|Criação da interface para extração de dados |
 # --------------------------------------------
 
+"""
+Módulo: Interface
+
+Este módulo implementa um algoritmo cuja função é criar uma interface para melhor 
+extração de dados que serão utilizados futuramente para classificar cônicas.
+
+Objetivos:
+- Criar uma janela que irá conter campos para o usuário inserir os dados;
+- Criar botões para auxiliar o usuário durante o processo de inserir os dados.
+
+Com os objetivos alcançados, será possível dar valores aos coeficientes da equação 
+geral Ax² + Bxy + Cy² + Dx + Ey + F = 0. 
+"""
+
 #Bibliotecas utilizadas
 import customtkinter as ctk
 from sympy import sympify, E, pi, sqrt
