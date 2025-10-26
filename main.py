@@ -7,22 +7,17 @@ from linear_algebra_conics import classificacao_conica
 from graphic import graph
 from sympy import Matrix
 
-
-#inicialização dos coeficientes da Equação Geral das Cônicas
-A, B, C, D, E, F = extracao()
-print(f"Valores dos coeficientes: A = {A}, B = {B}, C = {C}, D = {D}, E = {E}, F = {F}")
-
 #Iniciando variáveis
+A, B, C, D, E, F = None
+a = b = f = tipo = None
 Q = Matrix([[1,0],
             [0,1]]) #Definindo uma Matriz Q numérica
 
-a = b = f = tipo = None
 try:
-    tipo, Q, λ1, λ2, a, b, f = classificacao_conica(A, B, C, D, E, F)
-    print(f"Classificação: {tipo};\n Coef_x 1: {a}; \n coef_y 2: {b};\n Constante: {f}")
+    A, B, C, D, E, F = extracao() #Interface
+    tipo, Q, λ1, λ2, a, b, f = classificacao_conica(A, B, C, D, E, F) #Classificação da cônica
 except ValueError as VE:
     print(f"Erro: {VE}")
-
 
 #'Plotagem' do gráfico
 coef_eqg = [A, B, C, D, E, F]#Coeficientes da equação geral
