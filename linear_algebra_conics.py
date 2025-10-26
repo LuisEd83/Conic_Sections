@@ -129,6 +129,7 @@ def classificacao_conica(A,B,C,D,E,F):
     #Criando a matriz relacionada a Forma Quadrática qxy
     X = Matrix([[A, B/2],
                 [B/2, C]])
+    X = X.evalf()
     
     """
     Encontrando os autovalores associados a X
@@ -153,12 +154,15 @@ def classificacao_conica(A,B,C,D,E,F):
     λ_1 = float(λ_1.evalf()) #Transforma em valor numérico 
     λ_2 = float(λ_2.evalf())
     
+    if(λ_1 is None):
+        λ_1 = sol[0]
+
     if all(v == 0 for v in [λ_1, λ_2]): #λ_1 = λ_2 = 0 não pode ocorrer
         raise ValueError("Ambos os autovalores são nulos!")
 
     #Encontrando e normalizando os autovetores associados aos autovalores (usando a função autovetor_norm)
 
-    if abs(λ_1 - λ_2) < 1e-10:
+    if (abs(λ_1 - λ_2) < 1e-10):
     # Matriz é múltiplo da identidade — qualquer base ortonormal serve
     #Autovetores padrão associado a λ (quando λ_1 == λ_2)
         u1 = Matrix([[1], [0]]) 
@@ -212,8 +216,8 @@ def classificacao_conica(A,B,C,D,E,F):
 
         f = float(sp.N(F - (d**2)/(4*λ_1) - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
 
-        if(abs(λ_1 - λ_2) < 1e-10):
-            return ["Circunferência", λ_1, λ_2, f]
+        if((abs(λ_1 - λ_2) < 1e-10) and (f < 0)):
+            return ["Circunferência", Q, λ_1, λ_2, f]
 
         if(λ_1*λ_2 > 0):
             if(λ_1*λ_2*f < 0):
@@ -231,6 +235,9 @@ def classificacao_conica(A,B,C,D,E,F):
 
         return [
             tipo,
+            Q,
+            λ_1,
+            λ_2,
             float(sp.N(expr_transf2.coeff(x2, 2))),
             float(sp.N(expr_transf2.coeff(y2, 2))),
             f
@@ -257,7 +264,10 @@ def classificacao_conica(A,B,C,D,E,F):
         
         return [
             tipo,
-            float(sp.N(expr_transf2.coeff(x2, 2))),
+            Q,
+            λ_1,
+            λ_2,
+            float(sp.N(expr_transf2.coeff(x2, 1))),
             float(sp.N(expr_transf2.coeff(y2, 2))),
             f
         ]
@@ -282,7 +292,10 @@ def classificacao_conica(A,B,C,D,E,F):
         
         return [
             tipo,
+            Q,
+            λ_1,
+            λ_2,
             float(sp.N(expr_transf2.coeff(x2, 2))),
-            float(sp.N(expr_transf2.coeff(y2, 2))),
+            float(sp.N(expr_transf2.coeff(y2, 1))),
             f
         ]

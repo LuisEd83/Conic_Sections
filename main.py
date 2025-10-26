@@ -4,15 +4,27 @@ Criação de programa para calcular as Seções de Cônicas
 #Bibliotecas utilizadas
 from Interface import extracao
 from linear_algebra_conics import classificacao_conica
-import matplotlib as mp
+from graphic import graph
+from sympy import Matrix
 
 
 #inicialização dos coeficientes da Equação Geral das Cônicas
 A, B, C, D, E, F = extracao()
 print(f"Valores dos coeficientes: A = {A}, B = {B}, C = {C}, D = {D}, E = {E}, F = {F}")
+
+#Iniciando variáveis
+Q = Matrix([[1,0],
+            [0,1]]) #Definindo uma Matriz Q numérica
+
+a = b = f = tipo = None
 try:
-    tipo, a, b, f = classificacao_conica(A, B, C, D, E, F)
-    print(f"Classificação: {tipo};\n Autovalor 1: {a}; \n Autovalor 2: {b};\n Constante: {f}")
+    tipo, Q, λ1, λ2, a, b, f = classificacao_conica(A, B, C, D, E, F)
+    print(f"Classificação: {tipo};\n Coef_x 1: {a}; \n coef_y 2: {b};\n Constante: {f}")
 except ValueError as VE:
     print(f"Erro: {VE}")
 
+
+#'Plotagem' do gráfico
+coef_eqg = [A, B, C, D, E, F]#Coeficientes da equação geral
+clasf_c = [λ1, λ2, a, b, f] #Coeficientes da equação geral reduzida
+graph(coef_eqg, clasf_c, Q, tipo)
