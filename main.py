@@ -8,7 +8,7 @@ from graphic import graph
 from sympy import Matrix
 
 #Iniciando variáveis
-A, B, C, D, E, F = None
+A = B = C = D = E = F = None
 a = b = f = tipo = None
 Q = Matrix([[1,0],
             [0,1]]) #Definindo uma Matriz Q numérica
