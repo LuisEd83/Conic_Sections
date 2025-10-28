@@ -32,10 +32,13 @@ def centro_conica(A, B, C, D, E):
 
     if(sol):
         if(len(sol) == 1):
-            try:
-                var_x = var_y = float(sol[x]) 
-            except:
-                var_x = var_y = float(sol[y])
+            if((sol[x].free_symbols) or (sol[y].free_symbols)): #Verifica se a solução possui alguma parte simbólica, por exemplo: x = -y
+                return [0, 0]
+            else:
+                try:
+                    var_x = var_y = float(sol[x]) 
+                except:
+                    var_x = var_y = float(sol[y])
         else:
             var_x = float(sol[x])
             var_y = float(sol[y])

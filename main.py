@@ -1,5 +1,16 @@
+# ------------------------------------------------------------
+#|Criação de software para ministrar todas os outros arquivos  |
+# ------------------------------------------------------------
 """
-Criação de programa para calcular as Seções de Cônicas
+Módulo: main
+
+Este módulo é responsável por juntar todos os outros módulos.
+
+Objetivo:
+- Criar programa que irá inicializar os outros módulos de forma harmônica.
+
+Com isto será possível extrair dados, classificar e plotar a cônica.
+
 """
 #Bibliotecas utilizadas
 from Interface import extracao
@@ -27,5 +38,5 @@ while (True):
 
     #'Plotagem' do gráfico
     coef_eqg = [A, B, C, D, E, F] #Coeficientes da equação geral
-    clasf_c = [λ1, λ2, a, b, f] #Coeficientes da equação geral reduzida
+    clasf_c = [λ1, λ2, a, b, f] #Variáveis necessárias para plotar a quação reduzida
     graph(coef_eqg, clasf_c, Q, tipo)

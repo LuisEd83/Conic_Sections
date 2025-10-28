@@ -158,18 +158,18 @@ def classificacao_conica(A,B,C,D,E,F):
         u2 = Matrix([[0], [1]]) 
     else:
         # Autovetores distintos
-        u1 = autovetor_norm(λ_1, X) 
-        u2 = autovetor_norm(λ_2, X)
+        u1 = (-1)*autovetor_norm(λ_1, X) 
+        u2 = (-1)*autovetor_norm(λ_2, X)
 
         if (u1 is None or u2 is None):
             eigvecs = X.eigenvects()
             for val, mult, vecs in eigvecs:
                 if (abs(float(val) - float(λ_1)) < 1e-10):
                     u1 = sp.Matrix(vecs[0])
-                    u1 = u1.evalf()
+                    u1 = (-1)*u1.evalf()
                 if (abs(float(val) - float(λ_2)) < 1e-10):
                     u2 = sp.Matrix(vecs[0])
-                    u2 = u2.evalf()
+                    u2 = (-1)*u2.evalf()
     pretty_print(u1)
     pretty_print(u2)
 
