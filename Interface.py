@@ -18,7 +18,7 @@ geral Ax² + Bxy + Cy² + Dx + Ey + F = 0.
 
 #Bibliotecas utilizadas
 import customtkinter as ctk
-from sympy import sympify, E, pi, sqrt
+from sympy import sympify, pi, E, sqrt
 from tkinter import END
 
 def extracao():
@@ -72,7 +72,7 @@ def extracao():
             window.update_idletasks()
             window.after(2000)
             window.destroy()
-            coef[:] = [A, B, C, D, E, F]
+            coef[:] = [A, B, C, D, E, F, False]
 
         except ValueError as e:
             window.update_idletasks()
@@ -89,6 +89,18 @@ def extracao():
         campo_D.delete(0,END)
         campo_E.delete(0,END)
         campo_F.delete(0,END)
+
+    def validar_sair():
+        """
+        Essa função te faz sair da interface
+        """
+    
+        A = B = C = D = E = F = 0
+        verificacao.configure(text="Saindo...", font = ("Times", 15))
+        window.update_idletasks()
+        window.after(2000)
+        window.destroy()
+        coef[:] = [A, B, C, D, E, F, True]
 
     #Criando os campos: 
     #Há 3 campos : 
@@ -158,18 +170,24 @@ def extracao():
 
     botao_calcular = ctk.CTkButton(linha3, text = 'Calcular cônica',
                                     command = validar_variaveis,
-                                    hover_color = "green",
+                                    hover_color = 'green',
                                     corner_radius = 50)
 
     botao_limpar = ctk.CTkButton (linha3, text = 'Limpar campos',
                                 command = validar_clear,
-                                hover_color = "red",
+                                hover_color = 'darkblue',
+                                corner_radius = 50)
+    #Criando o botão Sair
+    botao_sair = ctk.CTkButton (linha3, text = 'Sair',
+                                command = validar_sair,
+                                hover_color = 'red',
                                 corner_radius = 50)
 
     botao_calcular.grid(row = 0, column = 0, padx = 5, pady = 5)
     botao_limpar.grid(row = 0, column = 1, padx = 5, pady = 5)
+    botao_sair.grid(row = 0, column = 2, padx = 5, pady = 5)
 
-    #Feedback do botão_calcular
+    #Feedback dos botões botão_calcular e botao_sair
     verificacao = ctk.CTkLabel(window, text = '')
     verificacao.pack(pady = 5)
     coef = []

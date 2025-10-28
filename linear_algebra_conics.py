@@ -28,53 +28,42 @@ nica calculada.
 
 #Bibliotecas utilizadas
 import sympy as sp
-from sympy import symbols, Matrix
+import numpy as np
+from sympy import symbols, Matrix, pretty_print
+from numbers import Number
 
-def autovetor_norm(λ, X : Matrix): #Aparentemente é esta função que está causando problemas
-    a, b = symbols("a b")
-    v = Matrix([[a],
-                [b]])
+def autovetor_norm(λ, X : Matrix): 
     
-    M_λ = (X - λ * sp.eye(2)) * v
-    eqs = [sp.Eq(M_λ[0], 0), sp.Eq(M_λ[1], 0)]
+    #Tentativa 1: resolver usando a função que retorna os autovetores da matriz X
+    eigvecs = X.eigenvects()
+    v = None
+    for val, mult, vecs in eigvecs:
+        if (np.isclose(float(val), float(λ), atol=1e-8)): #Compara o autovalor encontrado ao autovalor posto na função autovetor_norm
+            v = sp.Matrix(vecs[0]) #Pega o primeiro autovetor associado ao autovalor encontrado em eigvecs
+            break
+    print(f"{v}")
 
-    # Força a = 1 e tenta resolver em relação à variável b
-    sol = sp.solve([eqs[0].subs(a, 1), eqs[1].subs(a, 1)], [b], dict=True)
-
-    var_a = None
-    var_b = None
-    if sol:
-        var_a = 1
-        var_b = sol[0][b]
-    else:
-        #Forçar b = 1 e tenta resolver em relação à variável a
-        sol = sp.solve([eqs[0].subs(b, 1), eqs[1].subs(b, 1)], [a], dict=True)
-        if (sol):
-            var_a = sol[0][a]
-            var_b = 1
+    #Tentativa 2: Caso não tenha encontrado um autovetor com o método acima, tentaremos este:
+    if (v is None):
+        M_λ = X - λ * sp.eye(X.shape[0])
+        sol = M_λ.nullspace() #retorna os vetores da base do espaço nulo
+        if (len(sol) > 0):
+            v = sol[0]
         else:
-            #Caso as formas acima não consiga resolver, tentaremos resolver usando a função que retorna os autovetores da matriz X
-            eigvecs = X.eigenvects()
-            for val, mult, vecs in eigvecs:
-                if (abs(float(val) - float(λ)) < 1e-8): #Compara o autovalor encontrado ao autovalor posto na função autovetor_norm
-                    v = sp.Matrix(vecs[0]) #Pega o primeiro autovetor associado ao autovalor encontrado em eigvecs
-                    break
-            else:
-                return None
-            var_a, var_b = float(v[0]), float(v[1])
-    if not(sol):
-        raise ValueError("Não foi possível encontrar os autovetores.")
+            raise ValueError("Não foi possível encontrar o autovetor (nullspace vazio).")
+    
+    v = np.array(v, dtype=float).flatten()  # Garante o vetor v com valores numéricos
+    norm = np.linalg.norm(v)
 
-    v = Matrix([[var_a],
-                [var_b]])
-    v = v.evalf()
-    norm = sp.N(sp.sqrt(v.dot(v)))
+    print(f"vetor = {v}, norma = {norm}")
 
-    v_norm = sp.N(v/norm)
-    if(float(abs(norm)) < 1e-10):
-        return None
-    else:
-        return v_norm
+    if norm < 1e-10:
+        raise ValueError("Norma muito pequena (autovetor nulo).")   
+    
+    v_norm = v/norm
+    v_final = sp.Matrix(v_norm) #Retorna novamente como matriz sympy numérica
+    return v_final
+
 
 def completa_quadrado(a, b, c, var):
     expr = a*(var**2) + b*var + c
@@ -119,7 +108,7 @@ def classificacao_conica(A,B,C,D,E,F):
     - Constante: F
     """
     #Primeiramente, precisamos saber se A = B = C = 0 (Que, neste contexto, não pode ocorrer)
-    if all(v == 0 for v in [A,B,C]):
+    if ((A == 0) and (B == 0) and C == 0):
         raise ValueError("A, B e C não devem ser iguais a zero")
 
     #Escrevendo as funções
@@ -145,17 +134,17 @@ def classificacao_conica(A,B,C,D,E,F):
 
     # Garante dois autovalores reais
     sol = [s for s in sol if s.is_real]
-    if len(sol) == 1:
-        sol = [sol[0], sol[0]]
-    elif len(sol) == 0:
-        raise ValueError("Não há solução real do polinômio característico!")
+    if not (sol):
+        λ_1, λ_2 = 0, 0  # Ou use None para indicar falha
+    elif (len(sol) == 1):
+        λ_1 = λ_2 = sol[0]
+    else:
+        λ_1, λ_2 = sol[1], sol[0]
 
-    λ_1, λ_2 = sol[1], sol[0] #λ_1, λ_2 são os dois autovalores associados a X
-    λ_1 = float(λ_1.evalf()) #Transforma em valor numérico 
-    λ_2 = float(λ_2.evalf())
-    
-    if(λ_1 is None):
-        λ_1 = sol[0]
+    λ_1 = round(float(λ_1.evalf()), 6) #Transforma em valor numérico 
+    λ_2 = round(float(λ_2.evalf()), 6)
+
+    print(f"{λ_1}, {λ_2}")
 
     if all(v == 0 for v in [λ_1, λ_2]): #λ_1 = λ_2 = 0 não pode ocorrer
         raise ValueError("Ambos os autovalores são nulos!")
@@ -172,16 +161,30 @@ def classificacao_conica(A,B,C,D,E,F):
         u1 = autovetor_norm(λ_1, X) 
         u2 = autovetor_norm(λ_2, X)
 
+        if (u1 is None or u2 is None):
+            eigvecs = X.eigenvects()
+            for val, mult, vecs in eigvecs:
+                if (abs(float(val) - float(λ_1)) < 1e-10):
+                    u1 = sp.Matrix(vecs[0])
+                    u1 = u1.evalf()
+                if (abs(float(val) - float(λ_2)) < 1e-10):
+                    u2 = sp.Matrix(vecs[0])
+                    u2 = u2.evalf()
+    pretty_print(u1)
+    pretty_print(u2)
+
     #Criando a matriz Q para a realização da primeira substituição:
     Q = Matrix([[u1[0], u2[0]],
                 [u1[1], u2[1]]])
+    Q = np.array(Q.tolist(), dtype=float) #Convertendo Q para numpy, garantindo que Q seja numérico
+    pretty_print(Q)
 
     #Realizando a substituição
     x1,y1 = symbols("x1 y1") #Coordenadas da base de autovetores associados a λ_1, λ_2
     # v = Matrix([[x],
     #            [y]])
     w = Matrix([[x1],
-                [y1]])
+                [y1]]) #Nova base
     Y = Q * w
 
     #Nova Expressão
@@ -195,8 +198,8 @@ def classificacao_conica(A,B,C,D,E,F):
     Após isso, deve-se realizar uma série de análise:
     """
     #Extraindo dos coeficientes que faltam (d,e) da nova expressão: 
-    d_simb = expr_transf1.coeff(x1, 1) 
-    e_simb = expr_transf1.coeff(y1, 1)
+    d_simb = sp.expand(expr_transf1).coeff(x1, 1).subs(y1, 0)
+    e_simb = sp.expand(expr_transf1).coeff(y1, 1).subs(x1, 0)
 
     d = float(d_simb.evalf())
     e = float(e_simb.evalf())
@@ -217,7 +220,14 @@ def classificacao_conica(A,B,C,D,E,F):
         f = float(sp.N(F - (d**2)/(4*λ_1) - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
 
         if((abs(λ_1 - λ_2) < 1e-10) and (f < 0)):
-            return ["Circunferência", Q, λ_1, λ_2, f]
+            return [
+                "Circunferência",
+                Q, 
+                λ_1, 
+                λ_2,
+                float(sp.N(expr_transf2.coeff(x2, 2))),
+                float(sp.N(expr_transf2.coeff(y2, 2))),
+                f]
 
         if(λ_1*λ_2 > 0):
             if(λ_1*λ_2*f < 0):
