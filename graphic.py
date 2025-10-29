@@ -32,7 +32,7 @@ def centro_conica(A, B, C, D, E):
 
     if(sol):
         if(len(sol) == 1):
-            if((sol[x].free_symbols) or (sol[y].free_symbols)): #Verifica se a solução possui alguma parte simbólica, por exemplo: x = -y
+            if(sol[x].free_symbols): #Verifica se a solução possui alguma parte simbólica, por exemplo: x = -y
                 return [0, 0]
             else:
                 try:
@@ -51,14 +51,16 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     R = clasf_c[:] #[λ1, λ2, a, b, f]
 
     #Determinando os eixos do primeiro gráfico:
-    r = 18
+    r = 10
 
-    x1 = np.linspace(-r, r, int(np.sqrt(r))*200) #intervalo x ∈ [-(r + 1), (r + 1)]. Este intervalo é dividido em 1000 partes
-    y1 = np.linspace(-r, r, int(np.sqrt(r))*200) #Análogo ao x
+    x1 = np.linspace(-r, r, r*200) #intervalo x ∈ [-(r + 1), (r + 1)]. Este intervalo é dividido em 1000 partes
+    y1 = np.linspace(-r, r, r*200) #Análogo ao x
     X1, Y1 = np.meshgrid(x1, y1) #Cria uma grade com dois eixos, i.e, um plano cartesiano
     
     #Determinando a equação geral:
     Z1 = G[0]*(X1**2) + G[1]*X1*Y1 + G[2]*(Y1**2) + G[3]*X1 + G[4]*Y1 + G[5]
+    if(tipo == "Reta única"):
+        Z1 = G[0]*(X1**2) + G[1]*X1*Y1 + G[2]*(Y1**2) + G[3]*X1 + G[4]*Y1 + G[5] - 0.00004 #Para forçar o gráfico aparecer
 
     #Criando o gráfico:
     plt.figure(figsize = (12, 4.5)) #Determina o tamanho da figura onde estará o gráfico
@@ -68,14 +70,17 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     
     #Configurando o primeiro gráfico
     plt.subplot(1, 2, 1)
-    plt.contour(X1, Y1, Z1, levels=[0], colors='blue') #Determina a curva de nível (Z = 0)
+    if(tipo == "Reta única"):
+        plt.contour(X1, Y1, Z1, levels=[0], colors = 'blue', linewidths = 2.5, zorder = 1) #Determina a curva de nível (Z = 0)
+    else: 
+        plt.contour(X1, Y1, Z1, levels=[0], colors = 'blue', linewidths = 1.5, zorder = 1) #Determina a curva de nível (Z = 0)
     
     #'Plotando' os vetores canônicos (para melhor visualização):
-    plt.quiver(centro_og[0], centro_og[1], 1, 0, scale_units = 'xy', scale = 1, color = 'k')
-    plt.quiver(centro_og[0], centro_og[1], 0, 1, scale_units = 'xy', scale = 1, color = 'k')
+    plt.quiver(centro_og[0], centro_og[1], 1, 0, scale_units = 'xy', scale = 1, color = 'k', zorder = 3)
+    plt.quiver(centro_og[0], centro_og[1], 0, 1, scale_units = 'xy', scale = 1, color = 'k', zorder = 3)
 
     #'Plotando' o centro da cônica geral
-    plt.scatter(centro_og[0], centro_og[1], color='r', s=50, marker='.', label='Centro')
+    plt.scatter(centro_og[0], centro_og[1], color = 'r', s = 50, marker = '.', label = 'Centro', zorder = 4)
     plt.legend() 
 
     #Criando os eixos:
@@ -92,9 +97,10 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     plt.grid(True)
 
     #Determinando os eixos do segundo gráfico:
-    x2 = np.linspace(-r, r, int(np.sqrt(r))*200) #intervalo x ∈ [-(r + 1), (r + 1)]. Este intervalo é dividido em 1000 partes
-    y2 = np.linspace(-r, r, int(np.sqrt(r))*200) #Análogo ao x
+    x2 = np.linspace(-r, r, r*250) #intervalo x ∈ [-(r + 1), (r + 1)]. Este intervalo é dividido em 1000 partes
+    y2 = np.linspace(-r, r, r*250) #Análogo ao x
     X2, Y2 = np.meshgrid(x2, y2) #Cria uma grade com dois eixos, i.e, um plano cartesiano
+
 
     #Determinando a equação reduzida:
     Z2 = None
@@ -102,20 +108,27 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         Z2 = R[2]*(X2**2) + R[3]*(Y2**2) + R[4] #a*x² + b*y² + f
     elif((R[0] == 0) and (R[1] != 0)):
         Z2 = R[2]*X2 + R[3]*(Y2**2) + R[4] #a*x + b*y² + f
+        if(tipo == "Reta única"):
+            Z2 = R[2]*X2 + R[3]*(Y2**2) + R[4] - 0.0005 #Para forçar o gráfico aparecer
     elif((R[0] != 0) and (R[1] == 0)):
         Z2 = R[2]*(X2**2) + R[3]*(Y2) + R[4] #a*x² + b*y + f
+        if(tipo == "Reta única"):
+            Z2 = R[2]*(X2**2) + R[3]*(Y2) + R[4] - 0.0005 #Para forçar o gráfico aparecer
 
     #Configurando o segundo gráfico
     plt.subplot(1, 2, 2)
-    plt.contour(X2, Y2, Z2, levels=[0], colors='blue') #Determina a curva de nível (Z = 0)
-
+    if(tipo == "Reta única"):
+        plt.contour(X2, Y2, Z2, levels=[0], colors='blue', linewidths = 2.5, zorder = 1)
+    else:    
+        plt.contour(X2, Y2, Z2, levels=[0], colors='blue', linewidths = 1.5, zorder = 1) #Determina a curva de nível (Z = 0)
+    
     #'Plotando' os vetores associados aos autovalores (para melhor visualização):
     Q = np.array(Q.tolist(), dtype=float) #Convertendo Q para numpy 
-    plt.quiver(0, 0, Q[0][0], Q[1][0], scale_units = 'xy', scale = 1, color = 'r')
-    plt.quiver(0, 0, Q[0][1], Q[1][1], scale_units = 'xy', scale = 1, color = 'r')
-
+    plt.quiver(0, 0, Q[0][1], Q[1][1], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+    plt.quiver(0, 0, Q[0][0], Q[1][0], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+    
     #'Plotando' o centro da cônica reduzida
-    plt.scatter(0, 0, color='k', s=50, marker='.', label='Centro')
+    plt.scatter(0, 0, color='k', s=50, marker='.', label='Centro', zorder = 4)
     plt.legend()
 
     #Criando os eixos:
