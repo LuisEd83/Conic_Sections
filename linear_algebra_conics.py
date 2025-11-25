@@ -30,39 +30,36 @@ nica calculada.
 import sympy as sp
 import numpy as np
 from sympy import symbols, Matrix, pretty_print
-from numbers import Number
 
-def autovetor_norm(λ, X : Matrix): 
-    
-    #Tentativa 1: resolver usando a função que retorna os autovetores da matriz X
-    eigvecs = X.eigenvects()
-    v = None
-    for val, mult, vecs in eigvecs:
-        if (np.isclose(float(val), float(λ), atol=1e-8)): #Compara o autovalor encontrado ao autovalor posto na função autovetor_norm
-            v = sp.Matrix(vecs[0]) #Pega o primeiro autovetor associado ao autovalor encontrado em eigvecs
+def autovetor_norm(λ, X: Matrix):
+    # Converter matriz SymPy para numpy
+    X_np = np.array(X, dtype=float)
+
+    # Autovalores e autovetores (colunas)
+    vals, vecs = np.linalg.eig(X_np)
+
+    # Procurar o autovalor correspondente a λ (com tolerância numérica)
+    idx = None
+    for i, val in enumerate(vals):
+        if np.isclose(val, λ, atol=1e-8):
+            idx = i
             break
-    print(f"{v}")
 
-    #Tentativa 2: Caso não tenha encontrado um autovetor com o método acima, tentaremos este:
-    if (v is None):
-        M_λ = X - λ * sp.eye(X.shape[0])
-        sol = M_λ.nullspace() #retorna os vetores da base do espaço nulo
-        if (len(sol) > 0):
-            v = sol[0]
-        else:
-            raise ValueError("Não foi possível encontrar o autovetor (nullspace vazio).")
-    
-    v = np.array(v, dtype=float).flatten()  # Garante o vetor v com valores numéricos
+    if idx is None:
+        raise ValueError("Autovalor não encontrado via numpy.linalg.eig.")
+
+    # Pegamos o autovetor associado (coluna idx)
+    v = vecs[:, idx]
+
+    # Normalizar o autovetor
     norm = np.linalg.norm(v)
-
-    print(f"vetor = {v}, norma = {norm}")
-
     if norm < 1e-10:
-        raise ValueError("Norma muito pequena (autovetor nulo).")   
-    
-    v_norm = v/norm
-    v_final = sp.Matrix(v_norm) #Retorna novamente como matriz sympy numérica
-    return v_final
+        raise ValueError("Norma muito pequena (autovetor nulo).")
+
+    v_norm = v / norm
+
+    # Retorna como Matrix Numérica (SymPy)
+    return Matrix(v_norm)
 
 
 def completa_quadrado(a, b, c, var):
@@ -151,12 +148,7 @@ def classificacao_conica(A,B,C,D,E,F):
 
     #Encontrando e normalizando os autovetores associados aos autovalores (usando a função autovetor_norm)
 
-    if (abs(λ_1 - λ_2) < 1e-10):
-    # Matriz é múltiplo da identidade — qualquer base ortonormal serve
-    #Autovetores padrão associado a λ (quando λ_1 == λ_2)
-        u1 = Matrix([[1], [0]]) 
-        u2 = Matrix([[0], [1]]) 
-    else:
+    try:
         # Autovetores distintos
         u1 = (-1)*autovetor_norm(λ_1, X) 
         u2 = (-1)*autovetor_norm(λ_2, X)
@@ -170,8 +162,12 @@ def classificacao_conica(A,B,C,D,E,F):
                 if (abs(float(val) - float(λ_2)) < 1e-10):
                     u2 = sp.Matrix(vecs[0])
                     u2 = (-1)*u2.evalf()
-    pretty_print(u1)
-    pretty_print(u2)
+    except:
+        if(abs(λ_1 - λ_2) < 1e-10):
+            # Matriz é múltiplo da identidade — qualquer base ortonormal serve
+            #Autovetores padrão associado a λ (quando λ_1 == λ_2)
+            u1 = Matrix([[1], [0]]) 
+            u2 = Matrix([[0], [1]])
 
     #Criando a matriz Q para a realização da primeira substituição:
     Q = Matrix([[u1[0], u2[0]],
@@ -216,7 +212,6 @@ def classificacao_conica(A,B,C,D,E,F):
             y1: (y2 - e/(2*λ_2))
         })
         expr_transf2 = sp.expand(expr_transf2)
-
         f = float(sp.N(F - (d**2)/(4*λ_1) - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
 
         if((abs(λ_1 - λ_2) < 1e-10) and (f < 0)):
@@ -238,7 +233,7 @@ def classificacao_conica(A,B,C,D,E,F):
             if(λ_1*λ_2*f > 0):
                 tipo = "Vazio"
         else:
-            if(f != 0):
+            if(abs(f) > 1e-10):
                 tipo = "Hipérbole"
             else:
                 tipo = "Par de retas concorrentes"
@@ -261,15 +256,15 @@ def classificacao_conica(A,B,C,D,E,F):
         })
         expr_transf2 = sp.expand(expr_transf2)
         f = float(sp.N(F - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
-
-        if(d != 0):
+        print(expr_transf2)
+        if(abs(d) > 1e-10):
             tipo = "Parábola"
-        elif((d == 0) and (λ_2 * f < 0)):
+        elif((abs(d) < 1e-10) and (λ_2 * f < 0)):
             tipo = "Par de retas paralelas"
-        elif((d == 0) and (abs(f) == 1e-10)):
+        elif((abs(d) < 1e-10) and (abs(f) == 1e-10)):
             tipo = "Reta única"
         
-        if((d == 0) and (λ_2 * f > 0)):
+        if((abs(d) < 1e-10) and (λ_2 * f > 0)):
             tipo = "Vazio"
         
         return [
@@ -290,14 +285,14 @@ def classificacao_conica(A,B,C,D,E,F):
         })
         expr_transf2 = sp.expand(expr_transf2)
         f = float(sp.N(F - (d**2)/(4*λ_1))) #Feito de forma direa para garantir o valor numérico de f
-
+        print(expr_transf2)
         if(e != 0):
             tipo = "Parábola"
         else:
             tipo = "Par de retas paralelas"
-        if((e == 0) and (abs(f) < 1e-10)):
+        if((abs(e) < 1e-10) and (abs(f) < 1e-10)):
             tipo = "Reta única"
-        if((e == 0) and (λ_1 * f > 0)):
+        if((abs(e) < 1e-10) and (λ_1 * f > 0)):
             tipo = "Vazio"
         
         return [
