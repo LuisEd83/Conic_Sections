@@ -49,24 +49,24 @@ def centro_conica(A, B, C, D, E):
         except:
             return [0, 0]
     else:
-        # Sistema singular - cônica degenerada (par de retas ou reta única)
-        # Encontra a solução de mínimos quadrados (ponto mais próximo da origem que satisfaz o sistema)
+        #Sistema singular - cônica degenerada (par de retas ou reta única)
+        #Encontra a solução de mínimos quadrados (ponto mais próximo da origem que satisfaz o sistema)
         try:
             sol, residuals, rank, s = np.linalg.lstsq(M, b, rcond=None)
             
-            # Verifica se o sistema é consistente
+            #Verifica se o sistema é consistente
             if((rank < 2) or (residuals.size > 0 and residuals[0] > 1e-8)):
-                # Sistema inconsistente - não há centro único
-                # Para reta única, encontramos um ponto na reta mais próximo da origem
-                # A reta é dada por uma das equações: 2Ax + By + D = 0 ou Bx + 2Cy + E = 0
+                #Sistema inconsistente - não há centro único
+                #Para reta única, encontramos um ponto na reta mais próximo da origem
+                #A reta é dada por uma das equações: 2Ax + By + D = 0 ou Bx + 2Cy + E = 0
                 if ((abs(B) > 1e-10) or (abs(2*A) > 1e-10)):
-                    # Usa a primeira equação: 2Ax + By + D = 0
+                    #Usa a primeira equação: 2Ax + By + D = 0
                     a, b_coef, c = 2*A, B, D
                 else:
-                    # Usa a segunda equação: Bx + 2Cy + E = 0  
+                    #Usa a segunda equação: Bx + 2Cy + E = 0  
                     a, b_coef, c = B, 2*C, E
                 
-                # Encontra o ponto na reta ax + by + c = 0 mais próximo da origem
+                #Encontra o ponto na reta ax + by + c = 0 mais próximo da origem
                 denom = a**2 + b_coef**2
                 if(denom > 1e-10):
                     x0 = (-a * c) / denom
@@ -255,10 +255,12 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     r = np.sqrt(centro_og[0]**2 + centro_og[1]**2)
     r *= 3
     while((r <= 1.5) or (r<(np.sqrt(abs(R[4]))))):
-        r *= 2
-        
+        if(r == 0):
+            r += 0.5
+        else:
+            r *= 2
 
-    t = np.linspace(0, 1, 200) #Variável temporal. Intervalo t ∈ [0, 1].
+    t = np.linspace(0, 1, 50) #Variável temporal. Intervalo t ∈ [0, 1].
 
     #Calculando as coordenadas dos vetores em função de t
     def vectors(Q, t):
@@ -385,7 +387,6 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     #Criando os eixos:
     ax1.axhline(0, color = 'k', linewidth = 0.9) #Determina o eixo horizontal
     ax1.axvline(0, color = 'k', linewidth = 0.9) #Determina o eixo vertical
-    #ax1.gca().set_aspect('equal', adjustable = 'box') #Configura a forma como os valores são exibidos visualmente
     
     #Título - 
     ax1.set_title(f"Animação\nCônica original -> Equação reduzida.\n ({G0[0]:5.2f})x² + ({G0[1]:5.2f})xy + ({G0[2]:5.2f})y² + ({G0[3]:5.2f})x + ({G0[4]:5.2f})y + ({G0[5]:5.2f}) = 0",
