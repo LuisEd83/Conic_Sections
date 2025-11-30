@@ -312,6 +312,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
     #Criando funçao de atualização de frame:
     def update_conica(frame):
+        #----------------|Plotagem da cônica|----------------#
         nonlocal grafico_conica
         
         try:
@@ -325,7 +326,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         N_trans = total_frames - N_rot # segunda metade = translação
 
         #Fase 1: rotação
-        if frame < N_rot: #Aqui ele compara se o frame atual está no intervalo de rotação, no caso -> frame ∈[0, N_rot)
+        if(frame < N_rot): #Aqui ele compara se o frame atual está no intervalo de rotação, no caso -> frame ∈[0, N_rot)
             tt = frame/(N_rot - 1)
             
             #rotação progressiva
@@ -382,8 +383,8 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
         #Definindo variáveis (de forma análoga aplotagem das cônicas)
         total_frames = len(t)
-        N_rot = total_frames/2      # primeira metade = rotação
-        N_trans = total_frames - N_rot # segunda metade = translação
+        N_rot = total_frames/2      #Primeira metade = rotação
+        N_trans = total_frames - N_rot #Segunda metade = translação
 
         if(frame < N_rot):
             tt = frame/(N_rot - 1)
