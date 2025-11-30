@@ -260,27 +260,27 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         else:
             r *= 2
 
-    t = np.linspace(0, 1, 50) #Variável temporal. Intervalo t ∈ [0, 1].
+    t = np.linspace(0, 1, 200) #Variável temporal. Intervalo t ∈ [0, 1].
 
     #Calculando as coordenadas dos vetores em função de t
-    def vectors(Q, t):
+    def vectors_rot(Q, t): #Essa parte irá rotacionar o vetor
         # Calcula o ângulo de rotação da matriz Q
         angle = np.arctan2(Q[1, 0], Q[0, 0])
         
         # Ângulo interpolado
         angle_t = (1 - t)*angle
 
-        # Vetor 1 (eixo x rotacionado)
+        #Vetor 1 (eixo x rotacionado)
         xf1_t = np.cos(angle_t)
         yf1_t = np.sin(angle_t)
 
-        # Vetor 2 (eixo y rotacionado)
+        #Vetor 2 (eixo y rotacionado)
         xf2_t = -np.sin(angle_t)
         yf2_t = np.cos(angle_t)
 
-        # Centro: interpolando linearmente do centro_og para a origem
-        xi_t = centro_og[0] * (1 - t)
-        yi_t = centro_og[1] * (1 - t)
+        #Centro: linearmente do centro_og para a origem
+        xi_t = centro_og[0]
+        yi_t = centro_og[1]
 
         return [xi_t, yi_t, xf1_t, yf1_t, xf2_t, yf2_t]
 
@@ -293,7 +293,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     ax1.set_ylim(-r, r)
     ax1.set_aspect('equal', adjustable='box')
 
-    #Autovetores ortonormais
+    #Autovetores ortonormais convertidos em dados do numpy
     Q_np = np.array(Q.tolist(), float)
     # normaliza colunas
     for j in range(2):
@@ -320,19 +320,37 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         except:
             pass
 
-        tt = frame/(len(t)-1)
+        total_frames = len(t)
+        N_rot = total_frames/2      # primeira metade = rotação
+        N_trans = total_frames - N_rot # segunda metade = translação
 
-        #Rotação correta (não deforma)
-        ang = (1 - tt)*theta
+        #Fase 1: rotação
+        if frame < N_rot: #Aqui ele compara se o frame atual está no intervalo de rotação, no caso -> frame ∈[0, N_rot)
+            tt = frame/(N_rot - 1)
+            
+            #rotação progressiva
+            ang = (1 - tt)*theta
+            
+            #SEM translação nesta fase. Portanto, a rotação devo ocorrer no centro inicial da cônica
+            C_current = np.array([centro_og[0], centro_og[1]])
+
+        #fase 2: translação
+        else: #Se frame ∈ [N_rot, total_frames)
+            tt = (frame - N_rot) / (N_trans - 1)
+
+            #Rotação já finalizada
+            ang = 0.0   
+
+            #Translação progressiva até a origem
+            C_current = (1 - tt)*np.array(centro_og, float)
+
+        #Matriz de rotação para este frame
         Q_current = np.array([
             [np.cos(ang), -np.sin(ang)],
             [np.sin(ang),  np.cos(ang)]
         ])
 
-        #Translação suave
-        C_current = (1 - tt)*np.array(centro_og, float)
-
-        #Aplica movimento
+        #Aplica transformação
         XY = Q_current @ P + C_current.reshape(2,1)
 
         Xp, Yp = XY
@@ -362,15 +380,29 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             for v in vetores_quiver:
                 v.remove()
 
-        #Coordenadas dos vetores
-        tt = frame/(len(t)-1)
-        coord_vetores = vectors(Q, tt)
-        
-        #'Plotando' os vetores associados aos autovalores (para melhor visualização):
-        v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-        v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-        v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3,)
-        v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+        #Definindo variáveis (de forma análoga aplotagem das cônicas)
+        total_frames = len(t)
+        N_rot = total_frames/2      # primeira metade = rotação
+        N_trans = total_frames - N_rot # segunda metade = translação
+
+        if(frame < N_rot):
+            tt = frame/(N_rot - 1)
+            coord_vetores = vectors_rot(Q, tt)
+
+            #'Plotando' os vetores associados aos autovalores (para melhor visualização):
+            v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3,)
+            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+        else:
+            tt = (frame - N_rot)/(N_trans - 1)
+            coord_vetores = vectors_rot(Q, 1)
+
+            #Com o trecho abaixo, os vetores gradativamente irão sendo transportados para a origem (0,0)
+            v1 = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v1_i = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v2 = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3,)
+            v2_i = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
 
         vetores_quiver = [v1, v1_i, v2, v2_i]
 
