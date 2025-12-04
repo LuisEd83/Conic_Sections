@@ -136,7 +136,7 @@ def classificacao_conica(A,B,C,D,E,F):
     elif (len(sol) == 1):
         λ_1 = λ_2 = sol[0]
     else:
-        λ_1, λ_2 = sol[1], sol[0]
+        λ_1, λ_2 = sol[0], sol[1]
 
     λ_1 = round(float(λ_1.evalf()), 6) #Transforma em valor numérico 
     λ_2 = round(float(λ_2.evalf()), 6)
@@ -150,8 +150,8 @@ def classificacao_conica(A,B,C,D,E,F):
 
     try:
         # Autovetores distintos
-        u1 = (-1)*autovetor_norm(λ_1, X) 
-        u2 = (-1)*autovetor_norm(λ_2, X)
+        u1 = (1)*autovetor_norm(λ_1, X) 
+        u2 = (1)*autovetor_norm(λ_2, X)
 
         if (u1 is None or u2 is None):
             eigvecs = X.eigenvects()
