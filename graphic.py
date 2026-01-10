@@ -19,6 +19,8 @@ Com isso feito, será possível deixar mais dinâmico a forma como é calculada/
 
 import matplotlib.pyplot as plt
 import numpy as np
+import graphic_functions as gf
+
 from unicodedata import normalize, category
 from sympy import Matrix
 from matplotlib.animation import FuncAnimation
@@ -32,233 +34,16 @@ def normalize_tipo(s: str) -> str:
     s = ''.join(ch for ch in s if category(ch) != 'Mn') #remove acentos
     return s
 
-def centro_conica(A, B, C, D, E):
-    """
-    Calcula o centro de uma cônica dada por Ax² + Bxy + Cy² + Dx + Ey + F = 0
-    """
-    #Matriz do sistema para encontrar o centro
-    M = np.array([[2*A, B], [B, 2*C]])
-    b = np.array([-D, -E])
-    
-    #Verifica se a matriz é singular
-    if(abs(np.linalg.det(M)) > 1e-10):
-        # Sistema não singular - solução única
-        try:
-            sol = np.linalg.solve(M, b)
-            return [sol[0], sol[1]]
-        except:
-            return [0, 0]
-    else:
-        #Sistema singular - cônica degenerada (par de retas ou reta única)
-        #Encontra a solução de mínimos quadrados (ponto mais próximo da origem que satisfaz o sistema)
-        try:
-            sol, residuals, rank, s = np.linalg.lstsq(M, b, rcond=None)
-            
-            #Verifica se o sistema é consistente
-            if((rank < 2) or (residuals.size > 0 and residuals[0] > 1e-8)):
-                #Sistema inconsistente - não há centro único
-                #Para reta única, encontramos um ponto na reta mais próximo da origem
-                #A reta é dada por uma das equações: 2Ax + By + D = 0 ou Bx + 2Cy + E = 0
-                if ((abs(B) > 1e-10) or (abs(2*A) > 1e-10)):
-                    #Usa a primeira equação: 2Ax + By + D = 0
-                    a, b_coef, c = 2*A, B, D
-                else:
-                    #Usa a segunda equação: Bx + 2Cy + E = 0  
-                    a, b_coef, c = B, 2*C, E
-                
-                #Encontra o ponto na reta ax + by + c = 0 mais próximo da origem
-                denom = a**2 + b_coef**2
-                if(denom > 1e-10):
-                    x0 = (-a * c) / denom
-                    y0 = (-b_coef * c) / denom
-                    return [x0, y0]
-                else:
-                    return [0, 0]
-            else:
-                return [sol[0], sol[1]]
-        except:
-            return [0, 0]
-
-def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=400):
-    #Elipse / Circunferência
-    if(tipo in ["elipse", "circunferencia"]):
-        if ((A <= 0) or (B <= 0) or (f >= 0)):
-            return np.array([]), np.array([])
-        rx = np.sqrt(-f / A)
-        ry = np.sqrt(-f / B)
-        t = np.linspace(0, 2*np.pi, n_pts)
-        u = rx * np.cos(t)
-        v = ry * np.sin(t)
-        return u, v
-    
-    #Hipérbole
-    if(tipo == "hiperbole"):
-        #hiperbole exige A*B < 0
-        if (A*B >= 0):
-            return np.array([]), np.array([])
-        
-        #Corrigindo possíveis erros de plotagem:
-        if(f > 0):
-            A = -A
-            B = -B
-
-        #Dividir n_pts em dois para os dois ramos
-        n_half = n_pts // 2
-        t = np.linspace(-5, 5, n_half)
-
-        #Caso 1: A > 0 , B < 0  (eixo real = u)
-        if ((A > 0) and (B < 0)):
-            a = np.sqrt(abs(-f / A))
-            b = np.sqrt(abs(-f / (-B)))
-            u1 =  a * np.cosh(t)
-            v1 =  b * np.sinh(t)
-            u2 = -a * np.cosh(t)
-            v2 = -b * np.sinh(t)
-
-        #Caso 2: A < 0 , B > 0  (eixo real = v)
-        elif ((A < 0 )and (B > 0)):
-            a = np.sqrt(abs(-f / B))
-            b = np.sqrt(abs(-f / (-A)))
-            u1 =  b * np.sinh(t)
-            v1 =  a * np.cosh(t)
-            u2 = -b * np.sinh(t)
-            v2 = -a * np.cosh(t)
-
-        else:
-            return np.array([]), np.array([])
-
-        U = np.concatenate([u1, u2])
-        V = np.concatenate([v1, v2])
-        return U, V
-
-    #Parábola
-    if(tipo == "parabola"):
-        t = np.linspace(-10, 10, n_pts)
-
-        #λ1 = 0  -> A*u + B*v² + f = 0
-        if(abs(λ1) < 1e-12):
-            v = t
-            u = -(B*v*v + f)/A
-            return u, v
-
-        #λ2 = 0 -> A*u² + B*v + f = 0
-        if(abs(λ2) < 1e-12):
-            u = t
-            v = -(A*u*u + f)/B
-            return u, v
-
-        return np.array([]), np.array([])
-
-    #Par de retas concorrentes
-    if(tipo == "par de retas concorrentes"):
-        t = np.linspace(-10, 10, n_pts)
-
-        if ((A > 0) and (B < 0)):
-            k = np.sqrt(A/(-B))
-            u1, v1 = t,  k*t
-            u2, v2 = t, -k*t
-        elif ((A < 0) and (B > 0)):
-            k = np.sqrt((-A)/B)
-            u1, v1 = t,  k*t
-            u2, v2 = t, -k*t
-        else:
-            return np.array([]), np.array([])
-
-        #Inserir NaN para separar as retas
-        separator = np.array([np.nan])
-        U = np.concatenate([u1, separator, u2])
-        V = np.concatenate([v1, separator, v2])
-        return U, V
-    
-    #Par de retas paralelas
-    if(tipo == "par de retas paralelas"):
-        t = np.linspace(-10, 10, n_pts)
-        
-        #Caso 1: A·u² + f = 0 (retas verticais)
-        if((abs(B) < 1e-12) and (A * f < 0)):
-            u_val = np.sqrt(-f / A)
-            u1 = np.full_like(t, u_val)   #Primeira reta: u = sqrt(-f/A)
-            v1 = t
-            u2 = np.full_like(t, -u_val)  #Segunda reta: u = -sqrt(-f/A)
-            v2 = t
-            
-            #Inserir NaN para separar as retas
-            separator = np.array([np.nan])
-            U = np.concatenate([u1, separator, u2])
-            V = np.concatenate([v1, separator, v2])
-            return U, V
-        
-        #Caso 2: B·v² + f = 0 (retas horizontais)
-        elif((abs(A) < 1e-12) and (B * f < 0)):
-            v_val = np.sqrt(-f / B)
-            u1 = t
-            v1 = np.full_like(t, v_val)   #Primeira reta: v = sqrt(-f/B)
-            u2 = t
-            v2 = np.full_like(t, -v_val)  #Segunda reta: v = -sqrt(-f/B)
-            
-            #Inserir NaN para separar as retas
-            separator = np.array([np.nan])
-            U = np.concatenate([u1, separator, u2])
-            V = np.concatenate([v1, separator, v2])
-            return U, V
-        
-        else:
-            return np.array([]), np.array([])
-
-    #Reta única
-    if(tipo == "reta unica"):
-        t = np.linspace(-10, 10, n_pts)
-
-        #Caso 1: Equação linear Au + Bv + f = 0
-        if((abs(A) > 1e-12) and (abs(B) > 1e-12)):
-            u = t
-            v = -(A*u + f)/B
-        #Caso 2: A = 0, equação Bv + f = 0 -> reta horizontal
-        elif((abs(A) < 1e-12) and (abs(B) > 1e-12)):
-            u = t
-            v = np.full_like(t, -f/B)
-        #Caso 3: B = 0, equação Au + f = 0 -> reta vertical  
-        elif((abs(B) < 1e-12) and (abs(A) > 1e-12)):
-            u = np.full_like(t, -f/A)
-            v = t
-        #Caso 4: Equação quadrática degenerada (como 25u² = 0)
-        elif((abs(A) > 1e-12) and (abs(B) < 1e-12) and (abs(f) < 1e-12)):
-            u = np.full_like(t, 0.0)
-            v = t
-        elif((abs(B) > 1e-12) and (abs(A) < 1e-12) and (abs(f) < 1e-12)):
-            u = t
-            v = np.full_like(t, 0.0)
-        else:
-            return np.array([]), np.array([])
-
-        return u, v
-    
-    #Ponto
-    if(tipo == "ponto"):
-        return np.array([0]), np.array([0])
-
-    #Vazio
-    if(tipo == "vazio"):
-        return np.array([]), np.array([])
-
-    return np.array([]), np.array([])
-
-
 def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     G0 = coef_eqg[:] #Cria uma cópia de uma lista (para facilitar na escrita)
     R = clasf_c[:] #[λ1, λ2, a, b, f]
+    tipo_norm = normalize_tipo(tipo) #transforma as letras em minúculo
 
     #Determinando o centro da cônica original
-    centro_og = centro_conica(G0[0], G0[1], G0[2], G0[3], G0[4])
+    centro_og = gf.ponto_representativo(G0[0], G0[1], G0[2], G0[3], G0[4], G0[5], tipo_norm, 1e-12)
 
     #Automatizando o r
-    r = np.sqrt(centro_og[0]**2 + centro_og[1]**2)
-    r *= 3
-    while((r <= 1.5) or (r<(np.sqrt(abs(R[4]))))):
-        if(r == 0):
-            r += 0.5
-        else:
-            r *= 2
+    r = gf.raio_plot_conica(G0[0], G0[1], G0[2], G0[3], G0[4], centro_og)
 
     t = np.linspace(0, 1, 200) #Variável temporal. Intervalo t ∈ [0, 1].
 
@@ -279,8 +64,8 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         yf2_t = np.cos(angle_t)
 
         #Centro: linearmente do centro_og para a origem
-        xi_t = centro_og[0]
-        yi_t = centro_og[1]
+        xi_t = 0 #centro_og[0]
+        yi_t = 0 #centro_og[1]
 
         return [xi_t, yi_t, xf1_t, yf1_t, xf2_t, yf2_t]
 
@@ -293,72 +78,121 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     ax1.set_ylim(-r, r)
     ax1.set_aspect('equal', adjustable='box')
 
-    #Autovetores ortonormais convertidos em dados do numpy
+    #Autovetores ortonormais (convertidos para numpy)
     Q_np = np.array(Q.tolist(), float)
-    # normaliza colunas
+
+    #Normalização das colunas
     for j in range(2):
         Q_np[:, j] /= np.linalg.norm(Q_np[:, j])
 
-    #Parametrização em (u,v)
-    tipo_norm = normalize_tipo(tipo) #transforma as letras em minúculo
-    U, V = parametrizar_conica(tipo_norm, R[0], R[1], R[2], R[3], R[4])
+    #Parametrização da cônica no sistema (u, v)
+    U, V = gf.parametrizar_conica(
+        tipo_norm, R[0], R[1], R[2], R[3], R[4]
+    )
     P = np.vstack([U, V])
 
-    #Inicialização do gráfico
-    grafico_conica = None 
-    
-    #Extrai o ângulo de rotação da matriz Q
-    theta = np.arctan2(Q_np[1,0], Q_np[0,0])
+    #Inicialização de objetos gráficos
+    grafico_conica = None
+    centro = None        
+    Q_current = None     #Matriz de rotação atual
+    V_pa = None          #Vértice da parábola
+    V_red = None         #Vértive da parábola reduzida
+    C_current = None     #Ponto de referência para o plot
 
-    #Criando funçao de atualização de frame:
+
+    #Ângulo de rotação associado aos autovetores
+    theta = np.arctan2(Q_np[1, 0], Q_np[0, 0])
+
+    #Função de atualização dos frames da animação
     def update_conica(frame):
-        #----------------|Plotagem da cônica|----------------#
+        #----------------| Controle de escopo |----------------#
         nonlocal grafico_conica
-        
+        nonlocal centro
+        nonlocal Q_current
+        nonlocal V_pa
+        nonlocal V_red
+        nonlocal C_current
+
+        #----------------| Limpeza do frame anterior |----------#
         try:
-            if grafico_conica is not None:
+            if(grafico_conica is not None):
                 grafico_conica.remove()
+            if(centro is not None):
+                centro.remove()
         except:
             pass
 
+        #Parâmetros temporais da animação
         total_frames = len(t)
-        N_rot = total_frames/2      # primeira metade = rotação
-        N_trans = total_frames - N_rot # segunda metade = translação
+        N_rot = total_frames / 2          #Primeira metade: rotação
+        N_trans = total_frames - N_rot    #Segunda metade: translação
 
-        #Fase 1: rotação
-        if(frame < N_rot): #Aqui ele compara se o frame atual está no intervalo de rotação, no caso -> frame ∈[0, N_rot)
-            tt = frame/(N_rot - 1)
-            
-            #rotação progressiva
-            ang = (1 - tt)*theta
-            
-            #SEM translação nesta fase. Portanto, a rotação devo ocorrer no centro inicial da cônica
-            C_current = np.array([centro_og[0], centro_og[1]])
+        C_current = np.array([0.0, 0.0], float)
+        V_red = np.array([0.0, 0.0], float)
 
-        #fase 2: translação
-        else: #Se frame ∈ [N_rot, total_frames)
-            tt = (frame - N_rot) / (N_trans - 1)
+        #Vértice da parábola reduzida
+        if(tipo_norm == "parabola"):
+            if(abs(R[0]) < 1e-12):
+                V_red = np.array([-R[4]/R[2], 0.0])
+            elif(abs(R[1]) < 1e-12):
+                V_red = np.array([0.0, -R[4]/R[3]])
+        else:
+            V_red = np.zeros(2) #Uma vez que este vértice é da PARÁBOLA, então, para outras cônicas, ela não existe
 
-            #Rotação já finalizada
-            ang = 0.0   
+        #Fase 1: Rotação progressiva
+        if(frame < N_rot) and (theta != 0):
+            tt = frame / (N_rot - 1)
+            ang = (1 - tt) * theta   #Ângulo interpolado
 
-            #Translação progressiva até a origem
-            C_current = (1 - tt)*np.array(centro_og, float)
+            #---------- Sem translação nesta fase ----------#
+            if(tipo_norm == "parabola"):
+                #Rotação da vértice
+                V_pa = np.array(gf.rot_centro(centro_og, theta, tt), float)
+                C_current = V_pa.copy()
 
-        #Matriz de rotação para este frame
+            else:
+                #Outras cônicas: rotação em torno do centro
+                C_current = np.array(gf.rot_centro(centro_og, theta, tt), float) 
+
+        #Fase 2: Translação progressiva
+        else:
+            if theta == 0:
+                tt = frame / (N_trans - 1)
+                tt /= 2
+            else:
+                tt = (frame - N_rot) / (N_trans - 1)
+
+            ang = 0.0  #Rotação já concluída
+
+            if(tipo_norm == "parabola"):
+                #Vértice rotacionado (posição inicial)
+                V_ini = np.array(gf.rot_centro(centro_og, theta, 1), float)
+
+                #Interpolação correta até o vértice reduzido
+                C_current = (1 - tt) * V_ini + tt * V_red
+
+                V_pa = C_current.copy()
+
+            else:
+                C_current = (1 - tt) * np.array(gf.rot_centro(centro_og, theta, 1), float)
+
+        #Plot do ponto de referência
+        centro = ax1.scatter(C_current[0], C_current[1], color='r', s=50, marker='.', label='Centro', zorder=4)
+
+        ax1.legend()
+
+        #Rotação e plot da cônica
         Q_current = np.array([
             [np.cos(ang), -np.sin(ang)],
             [np.sin(ang),  np.cos(ang)]
         ])
 
-        #Aplica transformação
-        XY = Q_current @ P + C_current.reshape(2,1)
-
+        XY = Q_current @ (P - V_red.reshape(2,1)) + C_current.reshape(2, 1)
         Xp, Yp = XY
-        grafico_conica, = ax1.plot(Xp, Yp, 'b', linewidth=1.5)
+
+        grafico_conica, = ax1.plot(Xp, Yp, 'k', linewidth=1.5)
 
         return [grafico_conica]
-
 
 
     #Criando a animação
@@ -381,29 +215,25 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             for v in vetores_quiver:
                 v.remove()
 
-        #Definindo variáveis (de forma análoga aplotagem das cônicas)
         total_frames = len(t)
-        N_rot = total_frames/2      #Primeira metade = rotação
-        N_trans = total_frames - N_rot #Segunda metade = translação
-
-        if(frame < N_rot):
+        N_rot = total_frames/2
+        if((frame < N_rot) and (theta != 0)):
             tt = frame/(N_rot - 1)
-            coord_vetores = vectors_rot(Q, tt)
 
+            coord_vetores = vectors_rot(Q, tt) #vetores rotacionando.
             #'Plotando' os vetores associados aos autovalores (para melhor visualização):
             v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3,)
-            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
+            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
+            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
         else:
-            tt = (frame - N_rot)/(N_trans - 1)
             coord_vetores = vectors_rot(Q, 1)
 
-            #Com o trecho abaixo, os vetores gradativamente irão sendo transportados para a origem (0,0)
-            v1 = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v1_i = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v2 = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3,)
-            v2_i = ax1.quiver((1-tt)*coord_vetores[0], (1-tt)*coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            #Vetores estáticos na origem (0,0)
+            v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
+            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
+            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
 
         vetores_quiver = [v1, v1_i, v2, v2_i]
 
@@ -421,6 +251,18 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     ax1.axhline(0, color = 'k', linewidth = 0.9) #Determina o eixo horizontal
     ax1.axvline(0, color = 'k', linewidth = 0.9) #Determina o eixo vertical
     
+    #Criando plotagem estática da cônica original
+    V_red = np.zeros(2)
+    if(tipo_norm == "parabola"):
+        if(abs(R[0]) < 1e-12):
+            V_red = np.array([-R[4]/R[2], 0.0])
+        elif(abs(R[1]) < 1e-12):
+            V_red = np.array([0.0, -R[4]/R[3]])
+    
+    XY = Q_np @ (P - V_red.reshape(2,1)) + centro_og.reshape(2, 1)
+    Xp, Yp = XY
+    ax1.plot(Xp, Yp, 'red', linewidth=0.4, zorder=2)
+
     #Título - 
     ax1.set_title(f"Animação\nCônica original -> Equação reduzida.\n ({G0[0]:5.2f})x² + ({G0[1]:5.2f})xy + ({G0[2]:5.2f})y² + ({G0[3]:5.2f})x + ({G0[4]:5.2f})y + ({G0[5]:5.2f}) = 0",
               fontdict={
@@ -444,7 +286,10 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     ax2.axvline(0, color = 'k', linewidth = 0.9) #Determina o eixo vertical
 
     #'Plotando' o centro da cônica reduzida
-    ax2.scatter(0, 0, color='r', s=50, marker='.', label='Centro', zorder = 4)
+    if(tipo_norm == "parabola"):
+        ax2.scatter(V_red[0], V_red[1], color='r', s=50, marker='.', label='Vértice', zorder = 4)
+    else:
+        ax2.scatter(0, 0, color='r', s=50, marker='.', label='Centro', zorder = 4)
     ax2.legend()
 
     #'Plotando' os vetores canônicos (para melhor visualização):

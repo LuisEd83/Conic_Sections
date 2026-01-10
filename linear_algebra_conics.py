@@ -12,7 +12,7 @@ O algoritmo utilizará conceitos vistos em Álgebra Linear, como:
 - Transformação linear;
 - Autovalores e autovetores;
 - Diagonalização de matrizes;
-- Forma quadrática.
+- Forma quadrática e suas propriedades.
 
 Objetivos:
 - Determinar o tipo de cônica: parábola, hipérbole, elipse, circunferência, par de retas
@@ -32,35 +32,34 @@ import numpy as np
 from sympy import symbols, Matrix, pretty_print
 
 def autovetor_norm(λ, X: Matrix):
-    # Converter matriz SymPy para numpy
+    #Converter matriz SymPy para numpy
     X_np = np.array(X, dtype=float)
 
-    # Autovalores e autovetores (colunas)
+    #Autovalores e autovetores (colunas)
     vals, vecs = np.linalg.eig(X_np)
 
-    # Procurar o autovalor correspondente a λ (com tolerância numérica)
+    #Procurar o autovalor correspondente a λ (com tolerância numérica)
     idx = None
     for i, val in enumerate(vals):
         if np.isclose(val, λ, atol=1e-8):
             idx = i
             break
 
-    if idx is None:
+    if(idx is None):
         raise ValueError("Autovalor não encontrado via numpy.linalg.eig.")
 
-    # Pegamos o autovetor associado (coluna idx)
+    #Pegamos o autovetor associado (coluna idx)
     v = vecs[:, idx]
 
-    # Normalizar o autovetor
+    #Normalizar o autovetor
     norm = np.linalg.norm(v)
-    if norm < 1e-10:
+    if(norm < 1e-10):
         raise ValueError("Norma muito pequena (autovetor nulo).")
 
     v_norm = v / norm
 
-    # Retorna como Matrix Numérica (SymPy)
+    #Retorna como Matrix Numérica (NumPy)
     return Matrix(v_norm)
-
 
 def completa_quadrado(a, b, c, var):
     expr = a*(var**2) + b*var + c
@@ -80,9 +79,9 @@ def completa_quadrado_conica(λ_1, λ_2, d, e, F):
 
     #A expressão após a primeira Substituição é:
     expr_t1 = λ_1*(x1**2) + λ_2*(y1**2) + d*x1 + e*y1 + F
-    #Separando-a em três partes
-    expr_x = λ_1*(x1**2) + d*x1
-    expr_y = λ_2*(y1**2) + e*y1
+    #___Separando-a em três partes___#
+    #expr_x = λ_1*(x1**2) + d*x1
+    #expr_y = λ_2*(y1**2) + e*y1
     #F = F
 
     #Em relação a x
@@ -141,39 +140,34 @@ def classificacao_conica(A,B,C,D,E,F):
     λ_1 = round(float(λ_1.evalf()), 6) #Transforma em valor numérico 
     λ_2 = round(float(λ_2.evalf()), 6)
 
-    print(f"{λ_1}, {λ_2}")
-
     if all(v == 0 for v in [λ_1, λ_2]): #λ_1 = λ_2 = 0 não pode ocorrer
         raise ValueError("Ambos os autovalores são nulos!")
 
     #Encontrando e normalizando os autovetores associados aos autovalores (usando a função autovetor_norm)
-
-    try:
-        # Autovetores distintos
-        u1 = (1)*autovetor_norm(λ_1, X) 
-        u2 = (1)*autovetor_norm(λ_2, X)
+    if(abs(λ_1 - λ_2) < 1e-10):
+        # Matriz é múltiplo da identidade — qualquer base ortonormal serve
+        #Autovetores padrão associado a λ (quando λ_1 == λ_2)
+        u1 = Matrix([[1], [0]]) 
+        u2 = Matrix([[0], [1]])
+    else:
+        #Autovetores distintos
+        u1 = (-1)*autovetor_norm(λ_1, X) 
+        u2 = (-1)*autovetor_norm(λ_2, X)
 
         if (u1 is None or u2 is None):
             eigvecs = X.eigenvects()
             for val, mult, vecs in eigvecs:
                 if (abs(float(val) - float(λ_1)) < 1e-10):
                     u1 = sp.Matrix(vecs[0])
-                    u1 = (-1)*u1.evalf()
+                    u1 = (1)*u1.evalf()
                 if (abs(float(val) - float(λ_2)) < 1e-10):
                     u2 = sp.Matrix(vecs[0])
-                    u2 = (-1)*u2.evalf()
-    except:
-        if(abs(λ_1 - λ_2) < 1e-10):
-            # Matriz é múltiplo da identidade — qualquer base ortonormal serve
-            #Autovetores padrão associado a λ (quando λ_1 == λ_2)
-            u1 = Matrix([[1], [0]]) 
-            u2 = Matrix([[0], [1]])
+                    u2 = (1)*u2.evalf()
 
     #Criando a matriz Q para a realização da primeira substituição:
     Q = Matrix([[u1[0], u2[0]],
                 [u1[1], u2[1]]])
     Q = np.array(Q.tolist(), dtype=float) #Convertendo Q para numpy, garantindo que Q seja numérico
-    pretty_print(Q)
 
     #Realizando a substituição
     x1,y1 = symbols("x1 y1") #Coordenadas da base de autovetores associados a λ_1, λ_2
@@ -213,7 +207,6 @@ def classificacao_conica(A,B,C,D,E,F):
         })
         expr_transf2 = sp.expand(expr_transf2)
         f = float(sp.N(F - (d**2)/(4*λ_1) - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
-
         if((abs(λ_1 - λ_2) < 1e-10) and (f < 0)):
             return [
                 "Circunferência",
@@ -228,9 +221,9 @@ def classificacao_conica(A,B,C,D,E,F):
             if(λ_1*λ_2*f < 0):
                 #Isso implica que λ_1 e λ_2 tem sinal oposto a f
                 tipo = "Elipse"
-            if(abs(f) < 1e-10):
+            elif(abs(f) < 1e-6):
                 tipo = "Ponto"
-            if(λ_1*λ_2*f > 0):
+            elif((λ_1*λ_2)*f > 0):
                 tipo = "Vazio"
         else:
             if(abs(f) > 1e-10):
@@ -256,12 +249,11 @@ def classificacao_conica(A,B,C,D,E,F):
         })
         expr_transf2 = sp.expand(expr_transf2)
         f = float(sp.N(F - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
-        print(expr_transf2)
         if(abs(d) > 1e-10):
             tipo = "Parábola"
         elif((abs(d) < 1e-10) and (λ_2 * f < 0)):
             tipo = "Par de retas paralelas"
-        elif((abs(d) < 1e-10) and (abs(f) == 1e-10)):
+        elif((abs(d) < 1e-10) and (abs(f) < 1e-10)):
             tipo = "Reta única"
         
         if((abs(d) < 1e-10) and (λ_2 * f > 0)):
@@ -285,7 +277,6 @@ def classificacao_conica(A,B,C,D,E,F):
         })
         expr_transf2 = sp.expand(expr_transf2)
         f = float(sp.N(F - (d**2)/(4*λ_1))) #Feito de forma direa para garantir o valor numérico de f
-        print(expr_transf2)
         if(e != 0):
             tipo = "Parábola"
         else:
