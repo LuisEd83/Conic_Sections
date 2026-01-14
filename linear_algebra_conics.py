@@ -31,36 +31,6 @@ import sympy as sp
 import numpy as np
 from sympy import symbols, Matrix, pretty_print
 
-def autovetor_norm(λ, X: Matrix):
-    #Converter matriz SymPy para numpy
-    X_np = np.array(X, dtype=float)
-
-    #Autovalores e autovetores (colunas)
-    vals, vecs = np.linalg.eig(X_np)
-
-    #Procurar o autovalor correspondente a λ (com tolerância numérica)
-    idx = None
-    for i, val in enumerate(vals):
-        if np.isclose(val, λ, atol=1e-8):
-            idx = i
-            break
-
-    if(idx is None):
-        raise ValueError("Autovalor não encontrado via numpy.linalg.eig.")
-
-    #Pegamos o autovetor associado (coluna idx)
-    v = vecs[:, idx]
-
-    #Normalizar o autovetor
-    norm = np.linalg.norm(v)
-    if(norm < 1e-10):
-        raise ValueError("Norma muito pequena (autovetor nulo).")
-
-    v_norm = v / norm
-
-    #Retorna como Matrix Numérica (NumPy)
-    return Matrix(v_norm)
-
 def completa_quadrado(a, b, c, var):
     expr = a*(var**2) + b*var + c
 
@@ -130,47 +100,45 @@ def classificacao_conica(A,B,C,D,E,F):
 
     # Garante dois autovalores reais
     sol = [s for s in sol if s.is_real]
-    if not (sol):
-        λ_1, λ_2 = 0, 0  # Ou use None para indicar falha
-    elif (len(sol) == 1):
+    if(len(sol) == 1):
         λ_1 = λ_2 = sol[0]
     else:
         λ_1, λ_2 = sol[0], sol[1]
 
-    λ_1 = round(float(λ_1.evalf()), 6) #Transforma em valor numérico 
+    #Arredondando os autovalores
+    λ_1 = round(float(λ_1.evalf()), 6) 
     λ_2 = round(float(λ_2.evalf()), 6)
 
-    if all(v == 0 for v in [λ_1, λ_2]): #λ_1 = λ_2 = 0 não pode ocorrer
-        raise ValueError("Ambos os autovalores são nulos!")
+    #Ordenando os autovalores:
+    if(λ_1 < λ_2): 
+        t = λ_1
+        λ_1 = λ_2
+        λ_2 = t
 
     #Encontrando e normalizando os autovetores associados aos autovalores (usando a função autovetor_norm)
     if(abs(λ_1 - λ_2) < 1e-10):
-        # Matriz é múltiplo da identidade — qualquer base ortonormal serve
+        #Matriz é múltiplo da identidade — qualquer base ortonormal serve
         #Autovetores padrão associado a λ (quando λ_1 == λ_2)
         u1 = Matrix([[1], [0]]) 
         u2 = Matrix([[0], [1]])
     else:
         #Autovetores distintos
-        u1 = (-1)*autovetor_norm(λ_1, X) 
-        u2 = (-1)*autovetor_norm(λ_2, X)
-
-        if (u1 is None or u2 is None):
-            eigvecs = X.eigenvects()
-            for val, mult, vecs in eigvecs:
-                if (abs(float(val) - float(λ_1)) < 1e-10):
-                    u1 = sp.Matrix(vecs[0])
-                    u1 = (1)*u1.evalf()
-                if (abs(float(val) - float(λ_2)) < 1e-10):
-                    u2 = sp.Matrix(vecs[0])
-                    u2 = (1)*u2.evalf()
+        eigvecs = X.eigenvects()
+        for val, mult, vecs in eigvecs:
+            if (abs(float(val) - float(λ_1)) < 1e-10):
+                u1 = sp.Matrix(vecs[0])
+                u1 = (1)*u1.evalf()
+            if (abs(float(val) - float(λ_2)) < 1e-10):
+                u2 = sp.Matrix(vecs[0])
+                u2 = (1)*u2.evalf()
 
     #Criando a matriz Q para a realização da primeira substituição:
     Q = Matrix([[u1[0], u2[0]],
                 [u1[1], u2[1]]])
     Q = np.array(Q.tolist(), dtype=float) #Convertendo Q para numpy, garantindo que Q seja numérico
-
+    pretty_print(Q)
     #Realizando a substituição
-    x1,y1 = symbols("x1 y1") #Coordenadas da base de autovetores associados a λ_1, λ_2
+    x1, y1 = symbols("x1 y1") #Coordenadas da base de autovetores associados a λ_1, λ_2
     # v = Matrix([[x],
     #            [y]])
     w = Matrix([[x1],

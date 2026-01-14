@@ -35,246 +35,197 @@ def normalize_tipo(s: str) -> str:
     return s
 
 def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
-    G0 = coef_eqg[:] #Cria uma cópia de uma lista (para facilitar na escrita)
+    G0 = coef_eqg[:] #[A, B, C, D, E, F]
     R = clasf_c[:] #[λ1, λ2, a, b, f]
     tipo_norm = normalize_tipo(tipo) #transforma as letras em minúculo
 
-    #Determinando o centro da cônica original
-    centro_og = gf.ponto_representativo(G0[0], G0[1], G0[2], G0[3], G0[4], G0[5], tipo_norm, 1e-12)
+    #Ponto de referência da cônica. 
+    ponto_ref = gf.ponto_representativo(G0[0], G0[1], G0[2], G0[3], G0[4], G0[5], tipo_norm)
 
-    #Automatizando o r
-    r = gf.raio_plot_conica(G0[0], G0[1], G0[2], G0[3], G0[4], centro_og)
+    #Definindo o tamanho do gráfico
+    r = gf.raio_plot_conica(G0[0], G0[1], G0[2], G0[3], G0[4], ponto_ref)
+    
+    #Definindo o linspace do tempo (variável temporal).
+    t = np.linspace(0, 1, 400) #t ∈ [0, 1] com 400 repartições.
 
-    t = np.linspace(0, 1, 200) #Variável temporal. Intervalo t ∈ [0, 1].
+    #Definindo ãngulo de um dos autovetores:
+    theta = np.arctan2(Q[1][0], Q[0][0]) #Definie ângulo e quadrante.
 
-    #Calculando as coordenadas dos vetores em função de t
-    def vectors_rot(Q, t): #Essa parte irá rotacionar o vetor
-        # Calcula o ângulo de rotação da matriz Q
-        angle = np.arctan2(Q[1, 0], Q[0, 0])
-        
-        # Ângulo interpolado
-        angle_t = (1 - t)*angle
+    #Calculando a posição dos vetores em relação ao tempo t.
+    def vectors_rot(Q : Matrix, t):
+        #Ângulo de rotação:
+        alpha = theta
+
+        #Interpolando o ângulo
+        alpha_t = t * alpha #alpha_t ∈ [0, alpha]
 
         #Vetor 1 (eixo x rotacionado)
-        xf1_t = np.cos(angle_t)
-        yf1_t = np.sin(angle_t)
+        xf1_t = np.cos(alpha_t)
+        yf1_t = np.sin(alpha_t)
 
         #Vetor 2 (eixo y rotacionado)
-        xf2_t = -np.sin(angle_t)
-        yf2_t = np.cos(angle_t)
+        xf2_t = -np.sin(alpha_t)
+        yf2_t = np.cos(alpha_t)
 
-        #Centro: linearmente do centro_og para a origem
-        xi_t = 0 #centro_og[0]
-        yi_t = 0 #centro_og[1]
+        #Origem
+        xi = 0
+        yi = 0
 
-        return [xi_t, yi_t, xf1_t, yf1_t, xf2_t, yf2_t]
-
-    #----------------PRIMEIRA PARTE----------------#
+        return [xi, yi, xf1_t, yf1_t, xf2_t, yf2_t]
 
     #Criando uma figura e seus eixos
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+    
+    #----------------PRIMEIRA PARTE----------------#
 
     ax1.set_xlim(-r, r)
     ax1.set_ylim(-r, r)
     ax1.set_aspect('equal', adjustable='box')
 
-    #Autovetores ortonormais (convertidos para numpy)
-    Q_np = np.array(Q.tolist(), float)
+    #Parametrização da cônica:
+    U, V = gf.parametrizar_conica(tipo_norm, R[0], R[1], R[2], R[3], R[4])
+    P = np.stack([U, V])
 
-    #Normalização das colunas
-    for j in range(2):
-        Q_np[:, j] /= np.linalg.norm(Q_np[:, j])
-
-    #Parametrização da cônica no sistema (u, v)
-    U, V = gf.parametrizar_conica(
-        tipo_norm, R[0], R[1], R[2], R[3], R[4]
-    )
-    P = np.vstack([U, V])
-
-    #Inicialização de objetos gráficos
-    grafico_conica = None
-    centro = None        
-    Q_current = None     #Matriz de rotação atual
-    V_pa = None          #Vértice da parábola
-    V_red = None         #Vértive da parábola reduzida
-    C_current = None     #Ponto de referência para o plot
-
-
-    #Ângulo de rotação associado aos autovetores
-    theta = np.arctan2(Q_np[1, 0], Q_np[0, 0])
-
-    #Função de atualização dos frames da animação
-    def update_conica(frame):
-        #----------------| Controle de escopo |----------------#
-        nonlocal grafico_conica
-        nonlocal centro
-        nonlocal Q_current
-        nonlocal V_pa
-        nonlocal V_red
-        nonlocal C_current
-
-        #----------------| Limpeza do frame anterior |----------#
-        try:
-            if(grafico_conica is not None):
-                grafico_conica.remove()
-            if(centro is not None):
-                centro.remove()
-        except:
-            pass
-
-        #Parâmetros temporais da animação
-        total_frames = len(t)
-        N_rot = total_frames / 2          #Primeira metade: rotação
-        N_trans = total_frames - N_rot    #Segunda metade: translação
-
-        C_current = np.array([0.0, 0.0], float)
-        V_red = np.array([0.0, 0.0], float)
-
-        #Vértice da parábola reduzida
-        if(tipo_norm == "parabola"):
-            if(abs(R[0]) < 1e-12):
-                V_red = np.array([-R[4]/R[2], 0.0])
-            elif(abs(R[1]) < 1e-12):
-                V_red = np.array([0.0, -R[4]/R[3]])
-        else:
-            V_red = np.zeros(2) #Uma vez que este vértice é da PARÁBOLA, então, para outras cônicas, ela não existe
-
-        #Fase 1: Rotação progressiva
-        if(frame < N_rot) and (theta != 0):
-            tt = frame / (N_rot - 1)
-            ang = (1 - tt) * theta   #Ângulo interpolado
-
-            #---------- Sem translação nesta fase ----------#
-            if(tipo_norm == "parabola"):
-                #Rotação da vértice
-                V_pa = np.array(gf.rot_centro(centro_og, theta, tt), float)
-                C_current = V_pa.copy()
-
-            else:
-                #Outras cônicas: rotação em torno do centro
-                C_current = np.array(gf.rot_centro(centro_og, theta, tt), float) 
-
-        #Fase 2: Translação progressiva
-        else:
-            if theta == 0:
-                tt = frame / (N_trans - 1)
-                tt /= 2
-            else:
-                tt = (frame - N_rot) / (N_trans - 1)
-
-            ang = 0.0  #Rotação já concluída
-
-            if(tipo_norm == "parabola"):
-                #Vértice rotacionado (posição inicial)
-                V_ini = np.array(gf.rot_centro(centro_og, theta, 1), float)
-
-                #Interpolação correta até o vértice reduzido
-                C_current = (1 - tt) * V_ini + tt * V_red
-
-                V_pa = C_current.copy()
-
-            else:
-                C_current = (1 - tt) * np.array(gf.rot_centro(centro_og, theta, 1), float)
-
-        #Plot do ponto de referência
-        centro = ax1.scatter(C_current[0], C_current[1], color='r', s=50, marker='.', label='Centro', zorder=4)
-
-        ax1.legend()
-
-        #Rotação e plot da cônica
-        Q_current = np.array([
-            [np.cos(ang), -np.sin(ang)],
-            [np.sin(ang),  np.cos(ang)]
-        ])
-
-        XY = Q_current @ (P - V_red.reshape(2,1)) + C_current.reshape(2, 1)
-        Xp, Yp = XY
-
-        grafico_conica, = ax1.plot(Xp, Yp, 'k', linewidth=1.5)
-
-        return [grafico_conica]
-
-
-    #Criando a animação
-    animation_conica = FuncAnimation(
-        fig,
-        update_conica,
-        frames = len(t),
-        interval = 25,
-        repeat = True
-    )
-
-    vetores_quiver = None #Inicialização de valor
-    def update_vetor(frame):
-        #----------------|Plotagem dos vetores|----------------#
-        
-        nonlocal vetores_quiver
-
-        #Remove os vetores anteriores (se existirem)
-        if vetores_quiver is not None:
-            for v in vetores_quiver:
-                v.remove()
-
-        total_frames = len(t)
-        N_rot = total_frames/2
-        if((frame < N_rot) and (theta != 0)):
-            tt = frame/(N_rot - 1)
-
-            coord_vetores = vectors_rot(Q, tt) #vetores rotacionando.
-            #'Plotando' os vetores associados aos autovalores (para melhor visualização):
-            v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
-            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
-            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
-        else:
-            coord_vetores = vectors_rot(Q, 1)
-
-            #Vetores estáticos na origem (0,0)
-            v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
-            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
-            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
-
-        vetores_quiver = [v1, v1_i, v2, v2_i]
-
-        return vetores_quiver
-
-    animation_vetores = FuncAnimation(
-        fig,
-        update_vetor,
-        frames = len(t),
-        interval = 25,
-        repeat = True
-    )
-
-    #Criando os eixos:
-    ax1.axhline(0, color = 'k', linewidth = 0.9) #Determina o eixo horizontal
-    ax1.axvline(0, color = 'k', linewidth = 0.9) #Determina o eixo vertical
-    
-    #Criando plotagem estática da cônica original
-    V_red = np.zeros(2)
+    #Calculando possível vértice no sistema reduzido (caso a cônica seja uma parábola)
+    V_red = np.zeros(2) #Inicializa na origem (0, 0)
     if(tipo_norm == "parabola"):
         if(abs(R[0]) < 1e-12):
             V_red = np.array([-R[4]/R[2], 0.0])
         elif(abs(R[1]) < 1e-12):
             V_red = np.array([0.0, -R[4]/R[3]])
-    
-    XY = Q_np @ (P - V_red.reshape(2,1)) + centro_og.reshape(2, 1)
-    Xp, Yp = XY
-    ax1.plot(Xp, Yp, 'red', linewidth=0.4, zorder=2)
 
-    #Título - 
-    ax1.set_title(f"Animação\nCônica original -> Equação reduzida.\n ({G0[0]:5.2f})x² + ({G0[1]:5.2f})xy + ({G0[2]:5.2f})y² + ({G0[3]:5.2f})x + ({G0[4]:5.2f})y + ({G0[5]:5.2f}) = 0",
+    #Plotando cônica estática as coordenadas xy:
+    XY = Q @ (P - V_red.reshape(2, 1)) + ponto_ref.reshape(2, 1) #Rotaciona e translada a cônica parametrizada
+    Xp, Yp = XY
+    ax1.plot(Xp, Yp, 'red', linewidth = 1.5, zorder = 2)
+
+    #Elementos do gráfico (textos):
+    ax1.set_title(f"Animação - Mudança de eixo.\nEquação Geral:\n ({G0[0]:5.2f})x² + ({G0[1]:5.2f})xy + ({G0[2]:5.2f})y² + ({G0[3]:5.2f})x + ({G0[4]:5.2f})y + ({G0[5]:5.2f}) = 0",
               fontdict={
                     'weight': 'bold',      
                     'size': 10           
                 })
 
+    #----- Animação -> eixos -----#
+
+    #Inicialização de variáveis
+    eixo_autovetor1, = ax1.plot([], [], 'k', linewidth=1)
+    eixo_autovetor2, = ax1.plot([], [], 'k', linewidth=1)
+    def update_axis(frame):
+
+        #Variáveis temporais de frames:
+        total_frames = len(t)
+        N_rot = total_frames / 2        #Frames para rotação
+        N_trans = total_frames - N_rot  #frames para translação
+
+        X = np.linspace(-5*r, 5*r, 200) #Variável auxiliar para criar os eixos.
+        
+        if((frame < N_rot) and (theta != 0)):                                         #-----Rotação de eixos -----#
+            tt = frame / (N_rot - 1)
+            
+            ang = tt * theta
+            Q_current = np.array([
+                [np.cos(ang), -np.sin(ang)],
+                [np.sin(ang),  np.cos(ang)]
+            ])
+
+            v1_t = np.array([Q_current[0][0], Q_current[1][0]], float)
+            x1 = v1_t[0] * X
+            y1 = v1_t[1] * X
+
+            v2_t = np.array([Q_current[0][1], Q_current[1][1]], float)
+            x2 = v2_t[0] * X
+            y2 = v2_t[1] * X
+
+        elif((frame >= N_rot) and ((ponto_ref[0] != 0.0) and (ponto_ref[1] != 0.0))): #-----Translação dos eixos-----#
+            tt = (frame - N_rot)/(N_trans - 1)
+
+            #Com rotação concluída:
+            ang = 1 * theta
+
+            Q_current = np.array([
+                [np.cos(ang), -np.sin(ang)],
+                [np.sin(ang),  np.cos(ang)]
+            ])
+
+            v1_t = np.array([Q_current[0][0], Q_current[1][0]], float)
+            x1 = v1_t[0] * X + tt * ponto_ref[0] #Translação para a coordenada x do ponto de referência
+            y1 = v1_t[1] * X + tt * ponto_ref[1] #Translação para a coordenada y do ponto de referência
+
+            v2_t = np.array([Q_current[0][1], Q_current[1][1]], float)
+            x2 = v2_t[0] * X + tt * ponto_ref[0] #Translação para a coordenada x do ponto de referência
+            y2 = v2_t[1] * X + tt * ponto_ref[1] #Translação para a coordenada y do ponto de referência
+
+        #Definindo eixos:
+        eixo_autovetor1.set_data(x1, y1)
+        eixo_autovetor2.set_data(x2, y2)
+
+        return [eixo_autovetor1, eixo_autovetor2]
+    
+    Animation_axis = FuncAnimation(
+        fig,
+        update_axis,
+        frames = len(t),
+        interval = 25,
+        repeat = True
+    )
+
+    #----- Animação -> vetores -----#
+    vetores_quiver = None #Inicialização de valor
+    def update_vectors(frame):
+        nonlocal vetores_quiver
+        
+        #Remove os vetores anteriores (caso existam)
+        if(vetores_quiver is not None):
+            for v in vetores_quiver:
+                v.remove()
+
+        total_frames = len(t)
+        N_rot = total_frames/2 #Frames para rotação
+        N_trans = total_frames - N_rot  #frames para translação
+
+        if((frame < N_rot) and (theta != 0)): #-----Rotação de vetores-----#
+            tt = frame / (N_rot - 1)
+
+            coord_vetores = vectors_rot(Q, tt) #Extração de vetores
+
+            #'Plotando' os vetores associados aos autovalores (para melhor visualização):
+            v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
+            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
+            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
+        
+        elif((frame >= N_rot) and ((ponto_ref[0] != 0.0) and (ponto_ref[1] != 0.0))): #-----Translação dos vetores-----#
+            tt = (frame - N_rot)/(N_trans - 1)
+
+            coord_vetores_est = vectors_rot(Q, 1) #Extração de coordenadas com os vetores já rotacionados 
+
+            #'Plotando' a translação dos vetores estacionários
+            x_t = tt * ponto_ref[0] #Coordenada x(t) para translação
+            y_t = tt * ponto_ref[1] #Coordenada y(t) para translação
+
+            v1 = ax1.quiver(x_t, y_t, coord_vetores_est[4], coord_vetores_est[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+            v1_i = ax1.quiver(x_t, y_t, -coord_vetores_est[4], -coord_vetores_est[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
+            v2 = ax1.quiver(x_t, y_t, coord_vetores_est[2], coord_vetores_est[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
+            v2_i = ax1.quiver(x_t, y_t, -coord_vetores_est[2], -coord_vetores_est[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
+
+        vetores_quiver = [v1, v1_i, v2, v2_i]
+
+        return vetores_quiver
+    
+    Animation_vectors = FuncAnimation(
+        fig,
+        update_vectors,
+        frames = len(t),
+        interval = 25,
+        repeat = True
+    )
+
     #Mostrando a 'plotagem'
     ax1.set_xlabel("x -> u")
     ax1.set_ylabel("y -> v")
-    ax1.grid(True)
-    
+
+
     #----------------|SEGUNDA PARTE|----------------
 
     ax2.set_xlim(-r, r)

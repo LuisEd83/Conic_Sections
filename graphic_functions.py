@@ -229,9 +229,7 @@ def ponto_representativo(A, B, C, D, E, F, tipo, tol = 1e-12):
         x0, y0 = -0.5 * H_pinv @ g #Cálculo de coordenadas
     return np.array([x0, y0], float)
 
-#Foco da parábola
-
-def raio_plot_conica(A, B, C, D, E, F, centro=None):
+def raio_plot_conica(A, B, C, D, E, centro):
     #Base mínima
     r = 1.1
 
@@ -247,12 +245,3 @@ def raio_plot_conica(A, B, C, D, E, F, centro=None):
         r *= 1.01
     #Garantia mínima
     return max(r, 3.5)
-
-def rot_centro(C_centro, theta, t):
-    v = np.array(C_centro)#Vetor v = (C_centro[0], C_cemtrp[1])
-    v_norm = np.linalg.norm(v)
-    ang = np.arctan2(C_centro[1], C_centro[0])
-    
-    centro_rot = [v_norm*np.cos(ang - t*theta), v_norm*np.sin(ang - t*theta)]
-
-    return centro_rot
