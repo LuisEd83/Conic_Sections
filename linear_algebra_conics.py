@@ -29,7 +29,7 @@ nica calculada.
 #Bibliotecas utilizadas
 import sympy as sp
 import numpy as np
-from sympy import symbols, Matrix, pretty_print
+from sympy import symbols, Matrix
 
 def completa_quadrado(expr, var):
     #Coleta a expressão como polinômio em var
@@ -67,7 +67,7 @@ def completa_quadrado_conica(λ_1, λ_2, d, e, F):
     expr_t1 = expr
     return expr_t1
 
-def normaliza_parabola(expr, x, y):
+def correcao_parabola(expr, x, y):
     expr = sp.expand(expr)
 
     ax2 = expr.coeff(x, 2)
@@ -245,13 +245,13 @@ def classificacao_conica(A,B,C,D,E,F):
 
         if(abs(d) > 1e-10):
             tipo = "Parábola"
-            expr_transf2 = normaliza_parabola(expr_transf2, x2, y2)
+            expr_transf2 = correcao_parabola(expr_transf2, x2, y2)
             f = expr_transf2.subs({x2: 0, y2: 0})
             f = f.evalf()
 
-            print(expr_transf2)
         elif((abs(d) < 1e-10) and (λ_2 * f < 0)):
             tipo = "Par de retas paralelas"
+
         elif((abs(d) < 1e-10) and (abs(f) < 1e-10)):
             tipo = "Reta única"
         
@@ -280,15 +280,16 @@ def classificacao_conica(A,B,C,D,E,F):
 
         if(e != 0):
             tipo = "Parábola"
-            expr_transf2 = normaliza_parabola(expr_transf2, x2, y2)
+            expr_transf2 = correcao_parabola(expr_transf2, x2, y2)
             f = expr_transf2.subs({x2: 0, y2: 0})
             f = f.evalf()
-            
-            print(expr_transf2)
+
         else:
             tipo = "Par de retas paralelas"
+
         if((abs(e) < 1e-10) and (abs(f) < 1e-10)):
             tipo = "Reta única"
+
         if((abs(e) < 1e-10) and (λ_1 * f > 0)):
             tipo = "Vazio"
         

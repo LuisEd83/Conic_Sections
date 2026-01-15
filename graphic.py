@@ -46,11 +46,19 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     r = gf.raio_plot_conica(G0[0], G0[1], G0[2], G0[3], G0[4], ponto_ref)
     
     #Definindo o linspace do tempo (variável temporal).
-    t = np.linspace(0, 1, 400) #t ∈ [0, 1] com 400 repartições.
+    t = np.linspace(0, 1, 200) #t ∈ [0, 1] com 200 repartições.
 
-    #Definindo ãngulo de um dos autovetores:
+    #---Definindo ãngulo de um dos autovetores:---#
+    
     theta = np.arctan2(Q[1][0], Q[0][0]) #Definie ângulo e quadrante.
+    print(f"Valor do ângulo antes do tratamento: {theta}")
 
+    #Tratamento de ângulo:
+    theta_alt = theta + np.pi
+
+    if(abs(theta_alt) < abs(theta)):
+        theta = theta_alt
+    
     #Calculando a posição dos vetores em relação ao tempo t.
     def vectors_rot(Q : Matrix, t):
         #Ângulo de rotação:
