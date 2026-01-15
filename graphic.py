@@ -107,11 +107,21 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
                 })
 
     #----- Animação -> eixos -----#
-
     #Inicialização de variáveis
     eixo_autovetor1, = ax1.plot([], [], 'k', linewidth=1)
     eixo_autovetor2, = ax1.plot([], [], 'k', linewidth=1)
+
+    ponto = None
     def update_axis(frame):
+        nonlocal ponto
+        tp = 0 #Variável para o ponto de referência
+
+        #Limpeza do frame anterior
+        try:
+            if(ponto is not None):
+                ponto.remove()
+        except:
+            pass
 
         #Variáveis temporais de frames:
         total_frames = len(t)
@@ -122,7 +132,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         
         if((frame < N_rot) and (theta != 0)):                                         #-----Rotação de eixos -----#
             tt = frame / (N_rot - 1)
-            
+
             ang = tt * theta
             Q_current = np.array([
                 [np.cos(ang), -np.sin(ang)],
@@ -139,6 +149,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
         elif((frame >= N_rot) and ((ponto_ref[0] != 0.0) and (ponto_ref[1] != 0.0))): #-----Translação dos eixos-----#
             tt = (frame - N_rot)/(N_trans - 1)
+            tp = tt
 
             #Com rotação concluída:
             ang = 1 * theta
@@ -155,6 +166,10 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             v2_t = np.array([Q_current[0][1], Q_current[1][1]], float)
             x2 = v2_t[0] * X + tt * ponto_ref[0] #Translação para a coordenada x do ponto de referência
             y2 = v2_t[1] * X + tt * ponto_ref[1] #Translação para a coordenada y do ponto de referência
+            
+        #Definindo ponto de referência:
+        ponto = ax1.scatter(tp * ponto_ref[0], tp * ponto_ref[1] , color='k', s=50, marker='.', label='Ponto de referência', zorder = 4)
+        ax1.legend()
 
         #Definindo eixos:
         eixo_autovetor1.set_data(x1, y1)
@@ -162,13 +177,64 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
         return [eixo_autovetor1, eixo_autovetor2]
     
-    Animation_axis = FuncAnimation(
-        fig,
-        update_axis,
-        frames = len(t),
-        interval = 25,
-        repeat = True
-    )
+    #----- Animação -> grid -----#
+
+    #Definindo a quantidade de linhas do grid:
+    N = 6*(int)(r) #Número de elementos da lista
+    
+    #Criando listas no formato [None, None, ..., None]:
+    grid_list_x = [None for _ in range(N)]
+    grid_list_y = [None for _ in range(N)]
+
+    for i in range(N):
+        grid_list_x[i], = ax1.plot([], [], 'k', linewidth=0.2, zorder = 1)
+        grid_list_y[i], = ax1.plot([], [], 'k', linewidth=0.2, zorder = 1)
+    
+    def update_grid(frame):
+
+        #Inicialização de variáveis relaciondas a APENAS rotação:
+        total_frame = len(t)
+        N_rot = total_frame/2
+
+        #Inicialização de variável para criação das linhas do grid:
+        X = np.linspace(-5*r, 5*r, 50)
+
+        if((frame < N_rot) and (theta != 0)): #-----Rotação do grid -----#
+            tt = frame / (N_rot - 1)
+            
+            ang = tt * theta
+            Q_current = np.array([
+                [np.cos(ang), -np.sin(ang)],
+                [np.sin(ang),  np.cos(ang)]
+            ])
+
+            #Vetores canônicos:
+            v1 = np.array([1, 0], float)
+            v2 = np.array([0, 1], float)
+
+            for i in range(N):
+                #Para as retas horizontais
+                x1 = v1[0] * X + (-N/2 + i) * v2[0]
+                y1 = v1[1] * X + (-N/2 + i) * v2[1]
+                
+                P1 = np.stack([x1, y1])
+                XY1r = Q_current @ P1
+                x1r, y1r = XY1r
+
+                #Para as retas verticais
+                x2 = v2[0] * X + (-N/2 + i) * v1[0]
+                y2 = v2[1] * X + (-N/2 + i) * v1[1]
+                
+                P2 = np.stack([x2, y2])
+                XY2r = Q_current @ P2
+                x2r, y2r = XY2r
+
+                grid_list_x[i].set_data(x1r, y1r)
+                grid_list_y[i].set_data(x2r, y2r)
+
+        grid_list = [grid_list_x, grid_list_y]
+        return grid_list
+    
 
     #----- Animação -> vetores -----#
     vetores_quiver = None #Inicialização de valor
@@ -181,7 +247,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
                 v.remove()
 
         total_frames = len(t)
-        N_rot = total_frames/2 #Frames para rotação
+        N_rot = total_frames/2          #Frames para rotação
         N_trans = total_frames - N_rot  #frames para translação
 
         if((frame < N_rot) and (theta != 0)): #-----Rotação de vetores-----#
@@ -213,10 +279,28 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
         return vetores_quiver
     
+
+    #---Variáveis que realizam a animação---#
+    Animation_axis = FuncAnimation( 
+        fig,
+        update_axis,
+        frames = len(t),                                 #---Animação dos eixos---#
+        interval = 25,
+        repeat = True
+    )
+
+    Animation_grid = FuncAnimation(
+        fig,
+        update_grid,
+        frames = len(t),                                 #---Animação do grid---#
+        interval = 25,
+        repeat = True
+    )
+
     Animation_vectors = FuncAnimation(
         fig,
         update_vectors,
-        frames = len(t),
+        frames = len(t),                                 #---Animação dos vetores---#
         interval = 25,
         repeat = True
     )

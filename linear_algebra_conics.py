@@ -31,18 +31,23 @@ import sympy as sp
 import numpy as np
 from sympy import symbols, Matrix, pretty_print
 
-def completa_quadrado(a, b, c, var):
-    expr = a*(var**2) + b*var + c
+def completa_quadrado(expr, var):
+    #Coleta a expressão como polinômio em var
+    phi = sp.collect(expr, var, evaluate=False)
 
+    #Extração segura dos coeficientes
+    a = phi.get(var**2, 0)
+    b = phi.get(var, 0)
+    resto = phi.get(1, 0)
+
+    #Se não há termo quadrático, não há o que completar
     if(a == 0):
-        expr = b*var + c
-    elif((b == 0) and (c == 0)):
-        expr = a*(var**2)
-    elif((a == 0) and (b == 0) and (c == 0)):
-        raise ValueError("Não é possível completar quadrado com esta expressão")
-    else:
-        expr = a*(var + b/(2*a))**2 + (c - (b**2)/(4*a))
-    return expr
+        return expr
+
+    #Completar quadrado corretamente
+    expr_completada = a*(var + b/(2*a))**2 + (resto - b**2/(4*a))
+
+    return sp.simplify(expr_completada)
 
 def completa_quadrado_conica(λ_1, λ_2, d, e, F):
     x1, y1 = symbols("x1 y1")
@@ -55,14 +60,34 @@ def completa_quadrado_conica(λ_1, λ_2, d, e, F):
     #F = F
 
     #Em relação a x
-    expr_x = completa_quadrado(λ_1, d, 0, var = x1)
+    expr = completa_quadrado(expr_t1, var = x1)
     #Em relação a y
-    expr_y = completa_quadrado(λ_2, e, 0, var = y1)
+    expr = completa_quadrado(expr_t1, var = y1)
 
-    #Juntando tudo em uma única expressão e simplificando:
-    expr_t1 = sp.expand(expr_x + expr_y + F)
-
+    expr_t1 = expr
     return expr_t1
+
+def normaliza_parabola(expr, x, y):
+    expr = sp.expand(expr)
+
+    ax2 = expr.coeff(x, 2)
+    by2 = expr.coeff(y, 2)
+    f   = expr.subs({x: 0, y: 0})
+
+    #Caso y**2
+    if((by2 != 0) and (ax2 == 0)):
+        expr = expr - f
+        expr = sp.solve(expr, x)[0]
+        expr += -x
+
+    #Caso x**2
+    if((ax2 != 0) and (by2 == 0)):
+        expr = expr - f
+        expr = sp.solve(expr, y)[0]
+        expr += -y
+    
+    return sp.simplify(expr)
+
 
 def classificacao_conica(A,B,C,D,E,F):
     """
@@ -136,7 +161,6 @@ def classificacao_conica(A,B,C,D,E,F):
     Q = Matrix([[u1[0], u2[0]],
                 [u1[1], u2[1]]])
     Q = np.array(Q.tolist(), dtype=float) #Convertendo Q para numpy, garantindo que Q seja numérico
-    pretty_print(Q)
     #Realizando a substituição
     x1, y1 = symbols("x1 y1") #Coordenadas da base de autovetores associados a λ_1, λ_2
     # v = Matrix([[x],
@@ -148,7 +172,6 @@ def classificacao_conica(A,B,C,D,E,F):
     #Nova Expressão
     expr_transf1 = expr.subs({x : Y[0], y : Y[1]})
     expr_transf1 = sp.expand(expr_transf1)
-    expr_transf1 = sp.sympify(expr_transf1)
     """
     Após a primeira substituição, a fóruma geral será reduzida para:
     λ_1*(x1)**2 + λ_2*(y1)**2 + d*x1 + e*y1 + F = 0
@@ -173,7 +196,7 @@ def classificacao_conica(A,B,C,D,E,F):
             x1: (x2 - d/(2*λ_1)),
             y1: (y2 - e/(2*λ_2))
         })
-        expr_transf2 = sp.expand(expr_transf2)
+        expr_transf2 = sp.simplify(expr_transf2)
         f = float(sp.N(F - (d**2)/(4*λ_1) - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
         if((abs(λ_1 - λ_2) < 1e-10) and (f < 0)):
             return [
@@ -183,7 +206,8 @@ def classificacao_conica(A,B,C,D,E,F):
                 λ_2,
                 float(sp.N(expr_transf2.coeff(x2, 2))),
                 float(sp.N(expr_transf2.coeff(y2, 2))),
-                f]
+                f
+            ]
 
         if(λ_1*λ_2 > 0):
             if(λ_1*λ_2*f < 0):
@@ -215,10 +239,17 @@ def classificacao_conica(A,B,C,D,E,F):
             x1: x2,
             y1: (y2 - e/(2*λ_2))
         })
-        expr_transf2 = sp.expand(expr_transf2)
+        expr_transf2 = sp.simplify(expr_transf2)
+
         f = float(sp.N(F - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
+
         if(abs(d) > 1e-10):
             tipo = "Parábola"
+            expr_transf2 = normaliza_parabola(expr_transf2, x2, y2)
+            f = expr_transf2.subs({x2: 0, y2: 0})
+            f = f.evalf()
+
+            print(expr_transf2)
         elif((abs(d) < 1e-10) and (λ_2 * f < 0)):
             tipo = "Par de retas paralelas"
         elif((abs(d) < 1e-10) and (abs(f) < 1e-10)):
@@ -243,10 +274,17 @@ def classificacao_conica(A,B,C,D,E,F):
             x1: (x2 - d/(2*λ_1)),
             y1: y2
         })
-        expr_transf2 = sp.expand(expr_transf2)
+        expr_transf2 = sp.simplify(expr_transf2)
+
         f = float(sp.N(F - (d**2)/(4*λ_1))) #Feito de forma direa para garantir o valor numérico de f
+
         if(e != 0):
             tipo = "Parábola"
+            expr_transf2 = normaliza_parabola(expr_transf2, x2, y2)
+            f = expr_transf2.subs({x2: 0, y2: 0})
+            f = f.evalf()
+            
+            print(expr_transf2)
         else:
             tipo = "Par de retas paralelas"
         if((abs(e) < 1e-10) and (abs(f) < 1e-10)):

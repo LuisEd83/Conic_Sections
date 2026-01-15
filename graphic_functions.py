@@ -4,7 +4,12 @@
 
 
 """
-Docstring for graphic_functions
+Módulo: Depósito de funções para plotagem de gráfico
+
+Objetivo:
+- Desenvolver funções em Python para auxiliar na plotagem das cônicas.
+
+Com este objetivo concluído, será possível plotar as cônicas com maior precisão
 """
 
 import numpy as np
