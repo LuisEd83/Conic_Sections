@@ -25,7 +25,7 @@ from unicodedata import normalize, category
 from sympy import Matrix
 from matplotlib.animation import FuncAnimation
 
-def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, theta):
+def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     G0 = coef_eqg[:] #[A, B, C, D, E, F]
     R = clasf_c[:] #[λ1, λ2, a, b, f]
 
@@ -37,6 +37,12 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, theta):
     
     #Definindo o linspace do tempo (variável temporal).
     t = np.linspace(0, 1, 200) #t ∈ [0, 1] com 200 repartições.
+
+    #Definindo e tratando o ângulo:
+    theta = np.arctan2(Q[1][0], Q[0][0])
+    print(f"theta a: {theta}")
+    theta = gf.tratar_angulo(theta, tipo, R)
+    print(f"theta p: {theta}")
 
     #Calculando a posição dos vetores em relação ao tempo t.
     def vectors_rot(Q : Matrix, t):

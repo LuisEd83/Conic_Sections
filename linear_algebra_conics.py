@@ -124,22 +124,6 @@ def classificacao_conica(A,B,C,D,E,F):
         u1 = vetores[1]
         u2 = vetores[0]
 
-    #Tratamento do ângulo:
-    ang1 = np.degrees(np.arctan2(u1[1], u1[0])) #Transformando para graus para melhor precisão.
-    ang2 = np.degrees(np.arctan2(u2[1], u2[0])) #Transformando para graus para melhor precisão.
-
-    theta = ang2                                #Escolhendo o ângulo 2 como um defautl (padrão)
-    diff = ang1 - ang2
-    if(diff < 0):
-        #u2 *= 1
-        theta = ang1                            #Trocando para o ângulo 1 caso necessário
-
-    theta = np.radians(theta)                   #Transformando para radianos
-    
-    theta_alt = theta + np.pi
-    if(abs(theta_alt) < abs(theta)):            #Minimiza o ângulo de rotação
-        theta = theta_alt
-
     #Criando a matriz Q para a realização da primeira substituição:
     Q = np.array([[u1[0], u2[0]],
                 [u1[1], u2[1]]], dtype=float)
@@ -196,8 +180,7 @@ def classificacao_conica(A,B,C,D,E,F):
                 λ_2,
                 float(sp.N(expr_transf2.coeff(x2, 2))),
                 float(sp.N(expr_transf2.coeff(y2, 2))),
-                f,
-                theta
+                f
             ]
 
         if(λ_1*λ_2 > 0):
@@ -221,8 +204,7 @@ def classificacao_conica(A,B,C,D,E,F):
             λ_2,
             float(sp.N(expr_transf2.coeff(x2, 2))),
             float(sp.N(expr_transf2.coeff(y2, 2))),
-            f,
-            theta
+            f
         ]
 
     elif((λ_1 == 0) and (λ_2 != 0)):
@@ -257,8 +239,7 @@ def classificacao_conica(A,B,C,D,E,F):
             λ_2,
             float(sp.N(expr_transf2.coeff(x2, 1))),
             float(sp.N(expr_transf2.coeff(y2, 2))),
-            f,
-            theta
+            f
         ]
 
     elif((λ_1 != 0) and (λ_2 == 0)):
@@ -293,6 +274,5 @@ def classificacao_conica(A,B,C,D,E,F):
             λ_2,
             float(sp.N(expr_transf2.coeff(x2, 2))),
             float(sp.N(expr_transf2.coeff(y2, 1))),
-            f,
-            theta
+            f
         ]
