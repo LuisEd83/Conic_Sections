@@ -25,22 +25,12 @@ from unicodedata import normalize, category
 from sympy import Matrix
 from matplotlib.animation import FuncAnimation
 
-def normalize_tipo(s: str) -> str:
-    """
-    Modifica uma string deixando todos os caracteres minúsculos e sem acento
-    """
-    s = s.lower()
-    s = normalize('NFD', s)
-    s = ''.join(ch for ch in s if category(ch) != 'Mn') #remove acentos
-    return s
-
-def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
+def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, theta):
     G0 = coef_eqg[:] #[A, B, C, D, E, F]
     R = clasf_c[:] #[λ1, λ2, a, b, f]
-    tipo_norm = normalize_tipo(tipo) #transforma as letras em minúculo
 
     #Ponto de referência da cônica. 
-    ponto_ref = gf.ponto_representativo(G0[0], G0[1], G0[2], G0[3], G0[4], G0[5], tipo_norm)
+    ponto_ref = gf.ponto_representativo(G0[0], G0[1], G0[2], G0[3], G0[4], G0[5], tipo)
 
     #Definindo o tamanho do gráfico
     r = gf.raio_plot_conica(G0[0], G0[1], G0[2], G0[3], G0[4], ponto_ref)
@@ -48,17 +38,6 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     #Definindo o linspace do tempo (variável temporal).
     t = np.linspace(0, 1, 200) #t ∈ [0, 1] com 200 repartições.
 
-    #---Definindo ãngulo de um dos autovetores:---#
-    
-    theta = np.arctan2(Q[1][0], Q[0][0]) #Definie ângulo e quadrante.
-    print(f"Valor do ângulo antes do tratamento: {theta}")
-
-    #Tratamento de ângulo:
-    theta_alt = theta + np.pi
-
-    if(abs(theta_alt) < abs(theta)):
-        theta = theta_alt
-    
     #Calculando a posição dos vetores em relação ao tempo t.
     def vectors_rot(Q : Matrix, t):
         #Ângulo de rotação:
@@ -91,12 +70,12 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     ax1.set_aspect('equal', adjustable='box')
 
     #Parametrização da cônica:
-    U, V = gf.parametrizar_conica(tipo_norm, R[0], R[1], R[2], R[3], R[4])
+    U, V = gf.parametrizar_conica(tipo, R[0], R[1], R[2], R[3], R[4])
     P = np.stack([U, V])
 
     #Calculando possível vértice no sistema reduzido (caso a cônica seja uma parábola)
     V_red = np.zeros(2) #Inicializa na origem (0, 0)
-    if(tipo_norm == "parabola"):
+    if(tipo == "parabola"):
         if(abs(R[0]) < 1e-12):
             V_red = np.array([-R[4]/R[2], 0.0])
         elif(abs(R[1]) < 1e-12):
@@ -105,7 +84,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     #Plotando cônica estática as coordenadas xy:
     XY = Q @ (P - V_red.reshape(2, 1)) + ponto_ref.reshape(2, 1) #Rotaciona e translada a cônica parametrizada
     Xp, Yp = XY
-    ax1.plot(Xp, Yp, 'red', linewidth = 1.5, zorder = 2)
+    ax1.plot(Xp, Yp, 'b', linewidth = 1.5, zorder = 2)
 
     #Elementos do gráfico (textos):
     ax1.set_title(f"Animação - Mudança de eixo.\nEquação Geral:\n ({G0[0]:5.2f})x² + ({G0[1]:5.2f})xy + ({G0[2]:5.2f})y² + ({G0[3]:5.2f})x + ({G0[4]:5.2f})y + ({G0[5]:5.2f}) = 0",
@@ -138,7 +117,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
         X = np.linspace(-5*r, 5*r, 200) #Variável auxiliar para criar os eixos.
         
-        if((frame < N_rot) and (theta != 0)):                                         #-----Rotação de eixos -----#
+        if((frame < N_rot)):                                         #-----Rotação de eixos -----#
             tt = frame / (N_rot - 1)
 
             ang = tt * theta
@@ -150,12 +129,12 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             v1_t = np.array([Q_current[0][0], Q_current[1][0]], float)
             x1 = v1_t[0] * X
             y1 = v1_t[1] * X
-
+            
             v2_t = np.array([Q_current[0][1], Q_current[1][1]], float)
             x2 = v2_t[0] * X
             y2 = v2_t[1] * X
 
-        elif((frame >= N_rot) and ((ponto_ref[0] != 0.0) and (ponto_ref[1] != 0.0))): #-----Translação dos eixos-----#
+        elif((frame >= N_rot)): #-----Translação dos eixos-----#
             tt = (frame - N_rot)/(N_trans - 1)
             tp = tt
 
@@ -176,7 +155,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             y2 = v2_t[1] * X + tt * ponto_ref[1] #Translação para a coordenada y do ponto de referência
             
         #Definindo ponto de referência:
-        ponto = ax1.scatter(tp * ponto_ref[0], tp * ponto_ref[1] , color='k', s=50, marker='.', label='Ponto de referência', zorder = 4)
+        ponto = ax1.scatter(tp * ponto_ref[0], tp * ponto_ref[1] , color='r', s=50, marker='.', label='Ponto de referência', zorder = 4)
         ax1.legend()
 
         #Definindo eixos:
@@ -207,7 +186,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         #Inicialização de variável para criação das linhas do grid:
         X = np.linspace(-5*r, 5*r, 50)
 
-        if((frame < N_rot) and (theta != 0)): #-----Rotação do grid -----#
+        if((frame < N_rot)): #-----Rotação do grid -----#
             tt = frame / (N_rot - 1)
             
             ang = tt * theta
@@ -258,18 +237,16 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         N_rot = total_frames/2          #Frames para rotação
         N_trans = total_frames - N_rot  #frames para translação
 
-        if((frame < N_rot) and (theta != 0)): #-----Rotação de vetores-----#
+        if((frame < N_rot)): #-----Rotação de vetores-----#
             tt = frame / (N_rot - 1)
 
             coord_vetores = vectors_rot(Q, tt) #Extração de vetores
 
             #'Plotando' os vetores associados aos autovalores (para melhor visualização):
             v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v1_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[4], -coord_vetores[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
             v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
-            v2_i = ax1.quiver(coord_vetores[0], coord_vetores[1], -coord_vetores[2], -coord_vetores[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
-        
-        elif((frame >= N_rot) and ((ponto_ref[0] != 0.0) and (ponto_ref[1] != 0.0))): #-----Translação dos vetores-----#
+
+        elif((frame >= N_rot)): #-----Translação dos vetores-----#
             tt = (frame - N_rot)/(N_trans - 1)
 
             coord_vetores_est = vectors_rot(Q, 1) #Extração de coordenadas com os vetores já rotacionados 
@@ -279,11 +256,9 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             y_t = tt * ponto_ref[1] #Coordenada y(t) para translação
 
             v1 = ax1.quiver(x_t, y_t, coord_vetores_est[4], coord_vetores_est[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v1_i = ax1.quiver(x_t, y_t, -coord_vetores_est[4], -coord_vetores_est[5], scale_units = 'xy', scale = 1, color = 'purple', zorder = 3)
             v2 = ax1.quiver(x_t, y_t, coord_vetores_est[2], coord_vetores_est[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
-            v2_i = ax1.quiver(x_t, y_t, -coord_vetores_est[2], -coord_vetores_est[3], scale_units = 'xy', scale = 1, color = 'b', zorder = 3)
 
-        vetores_quiver = [v1, v1_i, v2, v2_i]
+        vetores_quiver = [v1, v2]
 
         return vetores_quiver
     
@@ -329,35 +304,33 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     ax2.axvline(0, color = 'k', linewidth = 0.9) #Determina o eixo vertical
 
     #'Plotando' o centro da cônica reduzida
-    if(tipo_norm == "parabola"):
+    if(tipo == "parabola"):
         ax2.scatter(V_red[0], V_red[1], color='r', s=50, marker='.', label='Vértice', zorder = 4)
     else:
         ax2.scatter(0, 0, color='r', s=50, marker='.', label='Centro', zorder = 4)
     ax2.legend()
 
     #'Plotando' os vetores canônicos (para melhor visualização):
-    ax2.quiver(0, 0, 1, 0, scale_units = 'xy', scale = 1, color = 'k', zorder = 3)
-    ax2.quiver(0, 0, 0, 1, scale_units = 'xy', scale = 1, color = 'k', zorder = 3)
-    ax2.quiver(0, 0, -1, 0, scale_units = 'xy', scale = 1, color = 'k', zorder = 3)
-    ax2.quiver(0, 0, 0, -1, scale_units = 'xy', scale = 1, color = 'k', zorder = 3)
+    ax2.quiver(0, 0, 0, 1, scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+    ax2.quiver(0, 0, 1, 0, scale_units = 'xy', scale = 1, color = 'g', zorder = 3)
     
     #Criando os eixos:
     ax2.axhline(0, color = 'k', linewidth = 0.5) #Determina o eixo horizontal
     ax2.axvline(0, color = 'k', linewidth = 0.5) #Determina o eixo vertical
     if(R[0]*R[1] !=0):
-        ax2.set_title(f"{tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
+        ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
               fontdict={
                     'weight': 'bold',      
                     'size': 10           
                 }) #O título será, também a classificação da Cônica
     elif((R[0] == 0) and (R[1] != 0)):
-        ax2.set_title(f"{tipo} \n ({R[2]:5.2f})u + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
+        ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
               fontdict={
                     'weight': 'bold',      
                     'size': 10           
                 })
     elif((R[0] != 0) and (R[1] == 0)):
-        ax2.set_title(f"{tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v + ({R[4]:5.2f}) = 0",
+        ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v + ({R[4]:5.2f}) = 0",
               fontdict={ 
                     'weight': 'bold',      
                     'size': 10           
@@ -368,7 +341,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
     #"Plotando" a cônica reduzida:
     #U e V já estão carregados em "U, V = parametrizar_conica(tipo_norm, R[0], R[1], R[2], R[3], R[4])"
-    ax2.plot(U, V, 'b', linewidth=1.5, label='Cônica reduzida', zorder=2)
+    ax2.plot(U, V, 'b', linewidth=1.5, zorder=2)
     ax2.legend()
     
     plt.show()

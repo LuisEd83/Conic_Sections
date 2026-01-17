@@ -126,7 +126,7 @@ def extracao():
         arq_def.close()
         
 
-    #Criando os campos: 
+    #Criando os campos:     
     #Há 3 campos : 
     # - Label : texto
     # - Entry : entrada

@@ -29,7 +29,9 @@ nica calculada.
 #Bibliotecas utilizadas
 import sympy as sp
 import numpy as np
-from sympy import symbols, Matrix
+
+from scipy import linalg
+from sympy import symbols, Matrix, pretty_print
 
 def completa_quadrado(expr, var):
     #Coleta a expressão como polinômio em var
@@ -78,13 +80,13 @@ def correcao_parabola(expr, x, y):
     if((by2 != 0) and (ax2 == 0)):
         expr = expr - f
         expr = sp.solve(expr, x)[0]
-        expr += -x
+        expr = x - expr
 
     #Caso x**2
     if((ax2 != 0) and (by2 == 0)):
         expr = expr - f
         expr = sp.solve(expr, y)[0]
-        expr += -y
+        expr = y - expr
     
     return sp.simplify(expr)
 
@@ -102,72 +104,60 @@ def classificacao_conica(A,B,C,D,E,F):
     if ((A == 0) and (B == 0) and C == 0):
         raise ValueError("A, B e C não devem ser iguais a zero")
 
-    #Escrevendo as funções
-    x, y = symbols("x y")
-    expr = A*(x**2) + B*(x*y) + C*(y**2) + D*x + E*y + F
+    X = np.array([[A, B/2],
+                  [B/2, C]], float)
 
-    #Criando a matriz relacionada a Forma Quadrática qxy
-    X = Matrix([[A, B/2],
-                [B/2, C]])
-    X = X.evalf()
+    #Extraindo autovalores e autovetores da matriz X:
+    valores, vetores = linalg.eigh(X)
+
+    #Ordenando os autovalores pelo valor absoluto.
+    if(abs(valores[0]) > abs(valores[1])): #Se |λ1| > |λ2|
+        λ_1 = valores[0]
+        λ_2 = valores[1]
+
+        u1 = vetores[0]
+        u2 = vetores[1]
+    else:
+        λ_1 = valores[1]
+        λ_2 = valores[0]
+
+        u1 = vetores[1]
+        u2 = vetores[0]
+
+    #Tratamento do ângulo:
+    ang1 = np.degrees(np.arctan2(u1[1], u1[0])) #Transformando para graus para melhor precisão.
+    ang2 = np.degrees(np.arctan2(u2[1], u2[0])) #Transformando para graus para melhor precisão.
+
+    theta = ang2                                #Escolhendo o ângulo 2 como um defautl (padrão)
+    diff = ang1 - ang2
+    if(diff < 0):
+        #u2 *= 1
+        theta = ang1                            #Trocando para o ângulo 1 caso necessário
+
+    theta = np.radians(theta)                   #Transformando para radianos
     
-    """
-    Encontrando os autovalores associados a X
-    Seja λ um autovalor qualquer:
-    """
-    λ = symbols("λ")
-    pλ = sp.det(X - λ*sp.eye(2)) #pλ é o polinômio característico
-    sol = sp.solve(sp.Eq(pλ, 0), λ)
-
-    #Se não houver solução real
-    if not(sol):
-        raise ValueError("Não há solução do polinômio característico!")
-
-    # Garante dois autovalores reais
-    sol = [s for s in sol if s.is_real]
-    if(len(sol) == 1):
-        λ_1 = λ_2 = sol[0]
-    else:
-        λ_1, λ_2 = sol[0], sol[1]
-
-    #Arredondando os autovalores
-    λ_1 = round(float(λ_1.evalf()), 6) 
-    λ_2 = round(float(λ_2.evalf()), 6)
-
-    #Ordenando os autovalores:
-    if(λ_1 < λ_2): 
-        t = λ_1
-        λ_1 = λ_2
-        λ_2 = t
-
-    #Encontrando e normalizando os autovetores associados aos autovalores (usando a função autovetor_norm)
-    if(abs(λ_1 - λ_2) < 1e-10):
-        #Matriz é múltiplo da identidade — qualquer base ortonormal serve
-        #Autovetores padrão associado a λ (quando λ_1 == λ_2)
-        u1 = Matrix([[1], [0]]) 
-        u2 = Matrix([[0], [1]])
-    else:
-        #Autovetores distintos
-        eigvecs = X.eigenvects()
-        for val, mult, vecs in eigvecs:
-            if (abs(float(val) - float(λ_1)) < 1e-10):
-                u1 = sp.Matrix(vecs[0])
-                u1 = (1)*u1.evalf()
-            if (abs(float(val) - float(λ_2)) < 1e-10):
-                u2 = sp.Matrix(vecs[0])
-                u2 = (1)*u2.evalf()
+    theta_alt = theta + np.pi
+    if(abs(theta_alt) < abs(theta)):            #Minimiza o ângulo de rotação
+        theta = theta_alt
 
     #Criando a matriz Q para a realização da primeira substituição:
-    Q = Matrix([[u1[0], u2[0]],
-                [u1[1], u2[1]]])
-    Q = np.array(Q.tolist(), dtype=float) #Convertendo Q para numpy, garantindo que Q seja numérico
+    Q = np.array([[u1[0], u2[0]],
+                [u1[1], u2[1]]], dtype=float)
+
+    #Restrigindo a matriz de autovetores:
+    if ((Q <= 0).all()):                        #Se todos os elementos da matriz forem menores ou iguais a 0, há uma inversão na matriz
+        Q = -Q
+    
     #Realizando a substituição
-    x1, y1 = symbols("x1 y1") #Coordenadas da base de autovetores associados a λ_1, λ_2
+    x1, y1 = symbols("x1 y1")                   #Coordenadas da base de autovetores associados a λ_1, λ_2
     # v = Matrix([[x],
     #            [y]])
     w = Matrix([[x1],
-                [y1]]) #Nova base
-    Y = Q * w
+                [y1]])                          #Nova base
+    Y = Q @ w
+    #Escreveno, primeiramente, a expressão primária:
+    x, y = symbols("x y")
+    expr = A*(x**2) + B*x*y + C*(y**2) + D*x + E*y + F
 
     #Nova Expressão
     expr_transf1 = expr.subs({x : Y[0], y : Y[1]})
@@ -200,13 +190,14 @@ def classificacao_conica(A,B,C,D,E,F):
         f = float(sp.N(F - (d**2)/(4*λ_1) - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
         if((abs(λ_1 - λ_2) < 1e-10) and (f < 0)):
             return [
-                "Circunferência",
+                "Circunferencia",
                 Q, 
-                λ_1, 
+                λ_1,
                 λ_2,
                 float(sp.N(expr_transf2.coeff(x2, 2))),
                 float(sp.N(expr_transf2.coeff(y2, 2))),
-                f
+                f,
+                theta
             ]
 
         if(λ_1*λ_2 > 0):
@@ -219,7 +210,7 @@ def classificacao_conica(A,B,C,D,E,F):
                 tipo = "Vazio"
         else:
             if(abs(f) > 1e-10):
-                tipo = "Hipérbole"
+                tipo = "Hiperbole"
             else:
                 tipo = "Par de retas concorrentes"
 
@@ -230,7 +221,8 @@ def classificacao_conica(A,B,C,D,E,F):
             λ_2,
             float(sp.N(expr_transf2.coeff(x2, 2))),
             float(sp.N(expr_transf2.coeff(y2, 2))),
-            f
+            f,
+            theta
         ]
 
     elif((λ_1 == 0) and (λ_2 != 0)):
@@ -244,7 +236,7 @@ def classificacao_conica(A,B,C,D,E,F):
         f = float(sp.N(F - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
 
         if(abs(d) > 1e-10):
-            tipo = "Parábola"
+            tipo = "Parabola"
             expr_transf2 = correcao_parabola(expr_transf2, x2, y2)
             f = expr_transf2.subs({x2: 0, y2: 0})
             f = f.evalf()
@@ -253,7 +245,7 @@ def classificacao_conica(A,B,C,D,E,F):
             tipo = "Par de retas paralelas"
 
         elif((abs(d) < 1e-10) and (abs(f) < 1e-10)):
-            tipo = "Reta única"
+            tipo = "Reta unica"
         
         if((abs(d) < 1e-10) and (λ_2 * f > 0)):
             tipo = "Vazio"
@@ -265,7 +257,8 @@ def classificacao_conica(A,B,C,D,E,F):
             λ_2,
             float(sp.N(expr_transf2.coeff(x2, 1))),
             float(sp.N(expr_transf2.coeff(y2, 2))),
-            f
+            f,
+            theta
         ]
 
     elif((λ_1 != 0) and (λ_2 == 0)):
@@ -279,7 +272,7 @@ def classificacao_conica(A,B,C,D,E,F):
         f = float(sp.N(F - (d**2)/(4*λ_1))) #Feito de forma direa para garantir o valor numérico de f
 
         if(e != 0):
-            tipo = "Parábola"
+            tipo = "Parabola"
             expr_transf2 = correcao_parabola(expr_transf2, x2, y2)
             f = expr_transf2.subs({x2: 0, y2: 0})
             f = f.evalf()
@@ -288,7 +281,7 @@ def classificacao_conica(A,B,C,D,E,F):
             tipo = "Par de retas paralelas"
 
         if((abs(e) < 1e-10) and (abs(f) < 1e-10)):
-            tipo = "Reta única"
+            tipo = "Reta unica"
 
         if((abs(e) < 1e-10) and (λ_1 * f > 0)):
             tipo = "Vazio"
@@ -300,5 +293,6 @@ def classificacao_conica(A,B,C,D,E,F):
             λ_2,
             float(sp.N(expr_transf2.coeff(x2, 2))),
             float(sp.N(expr_transf2.coeff(y2, 1))),
-            f
+            f,
+            theta
         ]

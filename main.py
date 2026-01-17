@@ -24,12 +24,13 @@ while (True):
     A = B = C = D = E = F = None
     boolean_value = False
     λ1 = λ2 = a = b = f = tipo = None
+    theta = None
     Q = Matrix([[1,0],
                 [0,1]]) #Definindo uma Matriz Q numérica
 
     try:
         A, B, C, D, E, F, boolean_value = extracao() #Interface
-        tipo, Q, λ1, λ2, a, b, f = classificacao_conica(A, B, C, D, E, F) #Classificação da cônica
+        tipo, Q, λ1, λ2, a, b, f, theta = classificacao_conica(A, B, C, D, E, F) #Classificação da cônica
     except ValueError as VE:
         print(f"Erro: {VE}")
 
@@ -39,4 +40,4 @@ while (True):
     #'Plotagem' do gráfico
     coef_eqg = [A, B, C, D, E, F] #Coeficientes da equação geral
     clasf_c = [λ1, λ2, a, b, f] #Variáveis necessárias para plotar a quação reduzida
-    graph(coef_eqg, clasf_c, Q, tipo)
+    graph(coef_eqg, clasf_c, Q, tipo, theta)

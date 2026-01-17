@@ -16,7 +16,7 @@ import numpy as np
 
 def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=200):
     #Elipse / Circunferência
-    if(tipo in ["elipse", "circunferencia"]):
+    if(tipo in ["Elipse", "Circunferencia"]):
         if ((A <= 0) or (B <= 0) or (f >= 0)):
             return np.array([]), np.array([])
         rx = np.sqrt(-f / A)
@@ -27,7 +27,7 @@ def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=200):
         return u, v
     
     #Hipérbole
-    if(tipo == "hiperbole"):
+    if(tipo == "Hiperbole"):
         #hiperbole exige A*B < 0
         if (A*B >= 0):
             return np.array([]), np.array([])
@@ -67,7 +67,7 @@ def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=200):
         return U, V
 
     #Parábola
-    if(tipo == "parabola"):
+    if(tipo == "Parabola"):
         t = np.linspace(-10, 10, n_pts)
 
         #λ1 = 0  -> A*u + B*v² + f = 0
@@ -85,7 +85,7 @@ def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=200):
         return np.array([]), np.array([])
 
     #Par de retas concorrentes
-    if(tipo == "par de retas concorrentes"):
+    if(tipo == "Par de retas concorrentes"):
         t = np.linspace(-10, 10, n_pts)
 
         if ((A > 0) and (B < 0)):
@@ -106,7 +106,7 @@ def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=200):
         return U, V
     
     #Par de retas paralelas
-    if(tipo == "par de retas paralelas"):
+    if(tipo == "Par de retas paralelas"):
         t = np.linspace(-10, 10, n_pts)
         
         #Caso 1: A·u² + f = 0 (retas verticais)
@@ -228,7 +228,7 @@ def ponto_representativo(A, B, C, D, E, F, tipo, tol = 1e-12):
 
     x0, y0 = [0,0]
     #Cálculo do vértice da Parábola
-    if(tipo == "parabola"): 
+    if(tipo == "Parabola"): 
         x0, y0 = vertice_parabola(F, H, g)
     else:
         x0, y0 = -0.5 * H_pinv @ g #Cálculo de coordenadas
