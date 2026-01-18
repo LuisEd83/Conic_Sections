@@ -74,9 +74,21 @@ def extracao():
             coef[:] = [A, B, C, D, E, F, False]
             
             #Algoritmo para salvar as variáveis em um arquivo
-            with open("default.txt", "w") as arq: #O with garante que o arquivo será fechado
+            linhas_defalt = []
+            with open("coefficients.txt", "r") as arq: #Lê os valores default antes da escrita
+                for _ in range(8):
+                    arq.readline()
+                
+                linhas_defalt = arq.readlines()
+
+            with open("coefficients.txt", "w") as arq: #Escreve os coeficientes e os valores default
                 for c in coef:
-                    arq.write(str(c) + '\n') #Escrevendo no arquivo coef.txt
+                    arq.write(str(c) + '\n') #Escrevendo no arquivo coefficients.txt
+                
+                arq.write('\n') #Escreve uma linha vazia para não ocorrer algum problema com outras funções
+
+                for l in linhas_defalt:
+                    arq.write(str(l)) #Reescrevendo os valores default
 
         except ValueError as e:
             window.update_idletasks()
@@ -106,13 +118,12 @@ def extracao():
         window.destroy()
         coef[:] = [A, B, C, D, E, F, True]
 
-    def validar_default():
+    def validar_repetir():
         """
         Essa função põe valores aos coeficientes de forma automática com valores default.
         """
-        arq_def = open("default.txt", "r")
+        arq_def = open("coefficients.txt", "r")
         if((arq_def.readable()) and (arq_def.read(1) != "")):
-            print("Arquivo default.txt aberto.")
 
             arq_def.seek(0)
             entry_varA.set(arq_def.readline().strip())
@@ -124,7 +135,29 @@ def extracao():
         else:
             verificacao.configure(text = "Não foi possível ler e extrair os valores do arquivo.", font = ("Times", 15))
         arq_def.close()
-        
+    
+    def validar_default():
+        """
+        Essa função pôe valores aos coeficientes da última cônica testada.  
+        """
+
+        try:
+            with open("coefficients.txt", "r", encoding="utf-8") as arq:
+                #Descarta valores entre as linhas 1 e 8
+                for _ in range(8):
+                    arq.readline()
+
+                # Agora estamos exatamente na linha 9
+                entry_varA.set(arq.readline().strip())
+                entry_varB.set(arq.readline().strip())
+                entry_varC.set(arq.readline().strip())
+                entry_varD.set(arq.readline().strip())
+                entry_varE.set(arq.readline().strip())
+                entry_varF.set(arq.readline().strip())
+
+        except (FileNotFoundError, ValueError, IndexError):
+            verificacao.configure(text="Não foi testada nenhuma cônica.", font=("Times", 15))
+
 
     #Criando os campos:     
     #Há 3 campos : 
@@ -208,10 +241,14 @@ def extracao():
     campo_F.grid(row = 0, column = 2, padx = 5, pady = 5)
 
     #Button
-    #Utilizando a variável linha3 para auxiliar a posição dos botões
 
+    #Utilizando as variável linha3 para auxiliar a posição dos 3 primeiros botões
     linha3 = ctk.CTkFrame(window)
     linha3.pack(pady = 5)
+
+    #Utilizando as variável linha4 para auxiliar a posição dos 2 últimos botões
+    linha4 = ctk.CTkFrame(window)
+    linha4.pack(pady = 5)
 
     #Criando o botão Executar
     botao_executar = ctk.CTkButton(linha3, text = 'Executar',
@@ -225,21 +262,32 @@ def extracao():
                                 hover_color = 'darkblue',
                                 corner_radius = 50)
     
-    #Criando o botão Sair
-    botao_sair = ctk.CTkButton (linha3, text = 'Sair',
-                                command = validar_sair,
-                                hover_color = 'red',
-                                corner_radius = 50)
-    
     #Criando o botão Default
     botao_default = ctk.CTkButton(linha3, text = "Default",
                                   command = validar_default,
                                   corner_radius = 50)
+    
 
+    #Criando o botão Repetir
+    botao_repetir = ctk.CTkButton(linha4, text = "Repetir",
+                                  command = validar_repetir,
+                                  hover_color = 'darkgreen',
+                                  corner_radius = 50)
+    
+    #Criando o botão Sair
+    botao_sair = ctk.CTkButton (linha4, text = 'Sair',
+                                command = validar_sair,
+                                hover_color = 'red',
+                                corner_radius = 50)
+    
+    #Linha superior
     botao_executar.grid(row = 0, column = 0, padx = 5, pady = 8)
     botao_limpar.grid(row = 0, column = 1, padx = 5, pady = 8)
     botao_default.grid(row = 0, column = 2, padx = 5, pady = 8)
-    botao_sair.grid(row = 1, column = 1, padx = 5, pady = 5)
+
+    #Linha inferior
+    botao_repetir.grid(row = 0, column = 0, padx = 5, pady = 5)
+    botao_sair.grid(row = 0, column = 1, padx = 5, pady = 5)
 
     #Feedback dos botões botão_calcular e botao_sair
     verificacao = ctk.CTkLabel(window, text = '')
