@@ -75,13 +75,13 @@ def extracao():
             
             #Algoritmo para salvar as variáveis em um arquivo
             linhas_defalt = []
-            with open("coefficients.txt", "r") as arq: #Lê os valores default antes da escrita
+            with open("scr/coefficients.txt", "r") as arq: #Lê os valores default antes da escrita
                 for _ in range(8):
                     arq.readline()
                 
                 linhas_defalt = arq.readlines()
 
-            with open("coefficients.txt", "w") as arq: #Escreve os coeficientes e os valores default
+            with open("scr/coefficients.txt", "w") as arq: #Escreve os coeficientes e os valores default
                 for c in coef:
                     arq.write(str(c) + '\n') #Escrevendo no arquivo coefficients.txt
                 
@@ -122,7 +122,7 @@ def extracao():
         """
         Essa função põe valores aos coeficientes de forma automática com valores default.
         """
-        arq_def = open("coefficients.txt", "r")
+        arq_def = open("scr/coefficients.txt", "r")
         if((arq_def.readable()) and (arq_def.read(1) != "")):
 
             arq_def.seek(0)
@@ -142,7 +142,7 @@ def extracao():
         """
 
         try:
-            with open("coefficients.txt", "r", encoding="utf-8") as arq:
+            with open("scr/coefficients.txt", "r", encoding="utf-8") as arq:
                 #Descarta valores entre as linhas 1 e 8
                 for _ in range(8):
                     arq.readline()
