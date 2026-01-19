@@ -157,10 +157,6 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             v2_t = np.array([Q_current[0][1], Q_current[1][1]], float)
             x2 = v2_t[0] * X + tt * ponto_ref[0] #Translação para a coordenada x do ponto de referência
             y2 = v2_t[1] * X + tt * ponto_ref[1] #Translação para a coordenada y do ponto de referência
-            
-        #Definindo ponto de referência:
-        ponto = ax1.scatter(tp * ponto_ref[0], tp * ponto_ref[1] , color='r', s=50, marker='.', label='Ponto de referência', zorder = 4)
-        ax1.legend()
 
         #Definindo eixos:
         eixo_autovetor1.set_data(x1, y1)
@@ -247,8 +243,8 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
             coord_vetores = vectors_rot(Q, tt) #Extração de vetores
 
             #'Plotando' os vetores associados aos autovalores (para melhor visualização):
-            v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
-            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
+            v1 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[2], coord_vetores[3], scale_units = 'xy', scale = 1, color = 'g', zorder = 3,)
+            v2 = ax1.quiver(coord_vetores[0], coord_vetores[1], coord_vetores[4], coord_vetores[5], scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
 
         elif((frame >= N_rot)): #-----Translação dos vetores-----#
             tt = (frame - N_rot)/(N_trans - 1)
@@ -273,7 +269,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         update_axis,
         frames = len(t),                                 #---Animação dos eixos---#
         interval = 25,
-        repeat = True
+        repeat = False
     )
 
     Animation_grid = FuncAnimation(
@@ -281,7 +277,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         update_grid,
         frames = len(t),                                 #---Animação do grid---#
         interval = 25,
-        repeat = True
+        repeat = False
     )
 
     Animation_vectors = FuncAnimation(
@@ -289,8 +285,17 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         update_vectors,
         frames = len(t),                                 #---Animação dos vetores---#
         interval = 25,
-        repeat = True
+        repeat = False
     )
+
+
+    #'Plotando' os vetores canônicos:
+    ax1.quiver(0, 0, 1, 0, scale_units = 'xy', scale = 1, color = 'g', zorder = 3)
+    ax1.quiver(0, 0, 0, 1, scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
+
+    #'Plotando' a origem do sistema xy
+    ax1.scatter(0, 0, color='k', s=50, marker='.', label = "Origem do plano xy",zorder = 4)
+    ax1.legend() 
 
     #Mostrando a 'plotagem'
     ax1.set_xlabel("x -> u")
@@ -307,16 +312,13 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     ax2.axhline(0, color = 'k', linewidth = 0.9) #Determina o eixo horizontal
     ax2.axvline(0, color = 'k', linewidth = 0.9) #Determina o eixo vertical
 
-    #'Plotando' o centro da cônica reduzida
-    if(tipo == "parabola"):
-        ax2.scatter(V_red[0], V_red[1], color='r', s=50, marker='.', label='Vértice', zorder = 4)
-    else:
-        ax2.scatter(0, 0, color='r', s=50, marker='.', label='Centro', zorder = 4)
+    #'Plotando' o centro do sistema de coordenadas uv (base de autovetores)
+    ax2.scatter(0, 0, color='r', s=50, marker='.', label='Origem do sistema uv', zorder = 4)
     ax2.legend()
 
     #'Plotando' os vetores canônicos (para melhor visualização):
-    ax2.quiver(0, 0, 0, 1, scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
     ax2.quiver(0, 0, 1, 0, scale_units = 'xy', scale = 1, color = 'g', zorder = 3)
+    ax2.quiver(0, 0, 0, 1, scale_units = 'xy', scale = 1, color = 'r', zorder = 3)
     
     #Criando os eixos:
     ax2.axhline(0, color = 'k', linewidth = 0.5) #Determina o eixo horizontal

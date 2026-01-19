@@ -31,7 +31,7 @@ import sympy as sp
 import numpy as np
 
 from scipy import linalg
-from sympy import symbols, Matrix
+from sympy import symbols, Matrix, pretty_print
 
 def completa_quadrado(expr, var):
     #Coleta a expressão como polinômio em var
@@ -127,10 +127,6 @@ def classificacao_conica(A,B,C,D,E,F):
     #Criando a matriz Q para a realização da primeira substituição:
     Q = np.array([[u1[0], u2[0]],
                 [u1[1], u2[1]]], dtype=float)
-
-    #Restrigindo a matriz de autovetores:
-    if ((Q <= 0).all()):                        #Se todos os elementos da matriz forem menores ou iguais a 0, há uma inversão na matriz
-        Q = -Q
     
     #Realizando a substituição
     x1, y1 = symbols("x1 y1")                   #Coordenadas da base de autovetores associados a λ_1, λ_2
