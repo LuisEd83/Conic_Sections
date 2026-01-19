@@ -141,7 +141,7 @@ def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=200):
             return np.array([]), np.array([])
 
     #Reta única
-    if(tipo == "reta unica"):
+    if(tipo == "Reta unica"):
         t = np.linspace(-10, 10, n_pts)
 
         #Caso 1: Equação linear Au + Bv + f = 0
@@ -250,17 +250,3 @@ def raio_plot_conica(A, B, C, D, E, centro):
         r *= 1.01
     #Garantia mínima
     return max(r, 3.5)
-
-def tratar_angulo(theta, tipo, coef, tol=1e-6):
-
-    if(tipo in ["Elipse", "Hiperbole", "Par de retas paralelas", "Par de retas concorrentes", "Circunferencia"]):
-        if(abs(coef[3]) > abs(coef[2])):
-            theta += np.pi/2
-        return theta % np.pi
-
-    elif(tipo == "Parabola"):
-        return theta
-
-    elif(tipo in ["Reta unica", "Retas congruentes"]):
-        theta = np.arctan2(coef[3], coef[2])
-        return (theta + np.pi/2) % np.pi - np.pi/2

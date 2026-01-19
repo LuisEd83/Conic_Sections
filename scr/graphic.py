@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import graphic_functions as gf
 
-from unicodedata import normalize, category
 from sympy import Matrix
 from matplotlib.animation import FuncAnimation
 
@@ -40,9 +39,8 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
     #Definindo e tratando o ângulo:
     theta = np.arctan2(Q[1][0], Q[0][0])
-    print(f"theta a: {theta}")
-    theta = gf.tratar_angulo(theta, tipo, R)
-    print(f"theta p: {theta}")
+    if(tipo == "Vazio"):
+        theta = 0.0
 
     #Calculando a posição dos vetores em relação ao tempo t.
     def vectors_rot(Q : Matrix, t):
