@@ -31,7 +31,7 @@ import sympy as sp
 import numpy as np
 
 from scipy import linalg
-from sympy import symbols, Matrix, pretty_print
+from sympy import symbols, Matrix
 
 def completa_quadrado(expr, var):
     #Coleta a expressão como polinômio em var
