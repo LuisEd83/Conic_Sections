@@ -140,7 +140,6 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
 
         elif((frame >= N_rot)): #-----Translação dos eixos-----#
             tt = (frame - N_rot)/(N_trans - 1)
-            tp = tt
 
             #Com rotação concluída:
             ang = 1 * theta

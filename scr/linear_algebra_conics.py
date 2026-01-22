@@ -104,29 +104,64 @@ def classificacao_conica(A,B,C,D,E,F):
     if ((A == 0) and (B == 0) and C == 0):
         raise ValueError("A, B e C não devem ser iguais a zero")
 
-    X = np.array([[A, B/2],
-                  [B/2, C]], float)
+    #Definindo variáveis da matriz da forma quadrática:
+    tracoM = A + C
+    # -> detM = A*C - (B**2)/4 <- #
+    sqr = np.sqrt((A - C)**2 + B**2)
 
-    #Extraindo autovalores e autovetores da matriz X:
-    valores, vetores = linalg.eigh(X)
+    #Com isto, o polinômio característico será:
+    #p(λ) = λ² - traxoM * λ + detM    (1)
 
-    #Ordenando os autovalores pelo valor absoluto.
-    if(abs(valores[0]) > abs(valores[1])): #Se |λ1| > |λ2|
-        λ_1 = valores[0]
-        λ_2 = valores[1]
+    #Calculando autovalores baseados em |λ_1| >= |λ_2| que satisfaçam (1):
+    λ_1 = (0.5)*(tracoM + sqr)
+    λ_2 = (0.5)*(tracoM - sqr)
 
-        u1 = vetores[0]
-        u2 = vetores[1]
-    else:
-        λ_1 = valores[1]
-        λ_2 = valores[0]
+    print(f"Autovalores: ({λ_1}, {λ_2})")
 
-        u1 = vetores[1]
-        u2 = vetores[0]
+    #Calculando os autovetores a partir dos casos:
+    #inicializando autovetores
+    V1 = V2 = [0.0, 0.0] #Vetores nulos
 
+    if(B < 0):
+        #Inicializando uma constante para não haver uma poluição visual:
+        k = np.sqrt((B**2) + 4*((λ_1 - A)**2))
+
+        #Vetor 1:
+        V1 = (-1/k) * np.array([[B],
+                                [2*(λ_1 - A)]], float)
+        #Vetor 2:
+        V2 = (1/k) * np.array([[2*(λ_1 - A)], 
+                                [-B]], float)
+
+    elif(B > 0):
+        #Inicializando uma constante para não haver uma poluição visual:
+        k = np.sqrt((B**2) + 4*((λ_1 - A)**2))
+
+        #Vetor 1:
+        V1 = (1/k) * np.array([[B],
+                                [2*(λ_1 - A)]], float)
+        #Vetor 2:
+        V2 = (1/k) * np.array([[-2*(λ_1 - A)], 
+                                [B]], float)
+    else: #B == 0
+        if(A >= C):
+            #Vetor 1:
+            V1 = np.array([[1],
+                            [0]], float)
+            #Vetor 2:
+            V2 = np.array([[0], 
+                            [1]], float)
+        else: #A < C
+            #Vetor 1:
+            V1 = np.array([[0],
+                            [1]], float)
+            #Vetor 2:
+            V2 = np.array([[-1], 
+                            [0]], float)
+            
     #Criando a matriz Q para a realização da primeira substituição:
-    Q = np.array([[u1[0], u2[0]],
-                [u1[1], u2[1]]], dtype=float)
+    Q = np.array([[V1[0, 0], V2[0, 0]],
+              [V1[1, 0], V2[1, 0]]], dtype=float)
     
     #Realizando a substituição
     x1, y1 = symbols("x1 y1")                   #Coordenadas da base de autovetores associados a λ_1, λ_2
