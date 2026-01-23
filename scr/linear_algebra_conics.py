@@ -71,7 +71,7 @@ def classificacao_conica(A, B, C, D, E, F):
     #Sabendo que λ1 + λ2 = tracoM:
     λ2 = tracoM - λ1
 
-    print(f"linha 121 -> Autovalores: ({λ1}, {λ2})")
+    print(f"Autovalores: ({λ1}, {λ2})")
 
     #Calculando os autovetores a partir dos casos:
     #inicializando autovetores
@@ -127,20 +127,14 @@ def classificacao_conica(A, B, C, D, E, F):
     #Criando a matriz Q para a realização da primeira substituição:
     Q = np.array([[V1[0, 0], V2[0, 0]],
               [V1[1, 0], V2[1, 0]]], dtype = float)
-    print(Q)
+    
+    print(f"Matriz de rotação: {Q}")
     #Definindo equação após [x, y] = Q@[r,s], tal que
     #eq1 = λ1 * (r**2) + λ2 * (s**2) + d * r + e * s + F
     
     #Onde, definindo constantes:
     d = D * Q[0][0] + E * Q[1][0]
     e = D * Q[0][1] + E * Q[1][1]
-
-    """if(auto_troca): #Detecta troca de autovalores e, então, troca as variáveis e e d.
-        t = d
-        d = e
-        e = t"""
-
-    print(f"Valor de d: {d}\nvalor de e: {e}")
 
     #Inicializando equação e constante:
     u, v = symbols("u v")
@@ -177,7 +171,7 @@ def classificacao_conica(A, B, C, D, E, F):
             
         #Se e == 0, não haverá substituição.
 
-    print(eq)
+    print(f"Expressão final: {eq}")
     #Classificando cônica:
     tipo = ""
     a = b = 0.0
