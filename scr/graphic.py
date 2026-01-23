@@ -24,7 +24,7 @@ import graphic_functions as gf
 from sympy import Matrix
 from matplotlib.animation import FuncAnimation
 
-def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_t : bool):
+def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_r : bool):
     G0 = coef_eqg[:] #[A, B, C, D, E, F]
     R = clasf_c[:] #[λ1, λ2, a, b, f]
 
@@ -92,7 +92,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_t : boo
     alpha = theta
     Q_co = Q
     
-    if((G0[1] == 0) and (tipo == "Parabola") and (autova_t)):
+    if((G0[1] == 0) and (tipo == "Parabola") and (autova_r)):
         alpha -= np.pi/2
 
         #Matriz de rotação corrigida para animação: 
@@ -342,7 +342,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_t : boo
                     'size': 10           
                 }) #O título será, também a classificação da Cônica
     else:
-        if(autova_t):
+        if(autova_r):
             ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
                 fontdict={
                         'weight': 'bold',      
@@ -361,7 +361,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_t : boo
 
     #"Plotando" a cônica reduzida:
     #U e V já estão carregados em "U, V = parametrizar_conica(tipo_norm, R[0], R[1], R[2], R[3], R[4])"
-    if(autova_t): #Troca de eixos
+    if(autova_r): #Troca de eixos
         U, V = V, U
 
     ax2.plot(U, V, 'b', linewidth=1.5, zorder=2)

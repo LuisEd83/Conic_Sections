@@ -54,22 +54,22 @@ def classificacao_conica(A, B, C, D, E, F):
     #p(λ) = λ² - traxoM * λ + detM    (1)
 
     #Definindo uma variável booleana para detectar troca de autovalores (no caso, λ1 = λm), uma vez que, a priori, λ1 = λp
-    auto_troca = False
+    auto_reo = False
     
-    #Calculando autovalores baseados em |λ_1| >= |λ_2| que satisfaçam (1):
-    λp = (0.5)*(tracoM + sqr) #λp é o λ+
-    λm = (0.5)*(tracoM - sqr) #λm é o λ_
+    #Calculando autovalores baseados em λ1 <= λ2 que satisfaçam (1):
+    λp = (0.5)*(tracoM + sqr) #λp é o λ+ (análogo ao λ1)
+    λm = (0.5)*(tracoM - sqr) #λm é o λ_ (análogo ao λ2)
 
     λ1 = λ2 = 0.0 #Inicializando autovalores
 
-    if(abs(λp) >= abs(λm)):
-        λ1 = λp
+    if(λp <= λm):
+        λ2 = λm
     else: 
-        λ1 = λm
-        auto_troca = True #Houve uma troca de autovalores
+        λ2 = λp
+        auto_reo = True #Houve uma reordenação de autovalores
 
     #Sabendo que λ1 + λ2 = tracoM:
-    λ2 = tracoM - λ1
+    λ1 = tracoM - λ1
 
     print(f"Autovalores: ({λ1}, {λ2})")
 
@@ -152,7 +152,7 @@ def classificacao_conica(A, B, C, D, E, F):
         #Definindo a constante f:
         f = F - (d**2)/(4*λ1)
 
-        if(auto_troca):
+        if(auto_reo):
             #Definindo equação
             eq = λ1*(v**2) + d*u + f
 
@@ -203,10 +203,10 @@ def classificacao_conica(A, B, C, D, E, F):
             a,
             b,
             f,
-            auto_troca
+            auto_reo
         ]
     else:
-        if((e != 0 and not auto_troca) or (abs(d) > 1e-10 and auto_troca)):
+        if((e != 0 and not auto_reo) or (abs(d) > 1e-10 and auto_reo)):
             tipo = "Parabola"
             f = eq.subs({u: 0, v:0})
             f = f.evalf()
@@ -214,13 +214,13 @@ def classificacao_conica(A, B, C, D, E, F):
         else:
             tipo = "Par de retas paralelas"
 
-        if((((abs(e) < 1e-10) and (abs(f) < 1e-10)) and not auto_troca) or ((abs(d) < 1e-10) and (abs(f) < 1e-10) and auto_troca)):
+        if((((abs(e) < 1e-10) and (abs(f) < 1e-10)) and not auto_reo) or ((abs(d) < 1e-10) and (abs(f) < 1e-10) and auto_reo)):
             tipo = "Reta unica"
         
-        elif((((abs(e) < 1e-10) and (λ1 * f > 0)) and not auto_troca) or ((abs(d) < 1e-10) and (λ2 * f > 0) and auto_troca)):
+        elif((((abs(e) < 1e-10) and (λ1 * f > 0)) and not auto_reo) or ((abs(d) < 1e-10) and (λ2 * f > 0) and auto_reo)):
             tipo = "Vazio"
         
-        if(auto_troca):
+        if(auto_reo):
             a = float(sp.N(eq.coeff(u, 1)))
             b = float(sp.N(eq.coeff(v, 2)))
         else:
@@ -235,5 +235,5 @@ def classificacao_conica(A, B, C, D, E, F):
             a,
             b,
             f,
-            auto_troca
+            auto_reo
         ]
