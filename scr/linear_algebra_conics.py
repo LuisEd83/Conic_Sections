@@ -135,10 +135,10 @@ def classificacao_conica(A, B, C, D, E, F):
     d = D * Q[0][0] + E * Q[1][0]
     e = D * Q[0][1] + E * Q[1][1]
 
-    if(auto_troca): #Detecta troca de autovalores e, então, troca as variáveis e e d.
+    """if(auto_troca): #Detecta troca de autovalores e, então, troca as variáveis e e d.
         t = d
         d = e
-        e = t
+        e = t"""
 
     print(f"Valor de d: {d}\nvalor de e: {e}")
 
@@ -158,19 +158,29 @@ def classificacao_conica(A, B, C, D, E, F):
         #Definindo a constante f:
         f = F - (d**2)/(4*λ1)
 
-        #Definindo equação:
-        eq = λ1*(u**2) + e*v + f
+        if(auto_troca):
+            #Definindo equação
+            eq = λ1*(v**2) + d*u + f
 
-        if(e != 0): #Faz-se uma substituição.
-            #λ1*(u**2) + e*v + f -> λ1*(u**2) + e*(v + f/e) e faz v' = (v + f/e)
-            #v = (v + f/e)
-            eq = λ1*(u**2) + e*v
+            if(d != 0):
+                #λ1*(v**2) + d*u + f -> λ1*(v**2) + d*(u + f/d) e faz u' = (u + f/d)
+                #u = (u + f/d)
+                eq = λ1*(v**2) + d*u
+        else:
+            #Definindo equação:
+            eq = λ1*(u**2) + e*v + f
+
+            if(e != 0): #Faz-se uma substituição.
+                #λ1*(u**2) + e*v + f -> λ1*(u**2) + e*(v + f/e) e faz v' = (v + f/e)
+                #v = (v + f/e)
+                eq = λ1*(u**2) + e*v
             
         #Se e == 0, não haverá substituição.
 
     print(eq)
     #Classificando cônica:
     tipo = ""
+    a = b = 0.0
     if(λ1*λ2 != 0):
         if((abs(λ1 - λ2) < 1e-10) and (f < 0)):
             tipo = "Circunferencia"
@@ -188,39 +198,48 @@ def classificacao_conica(A, B, C, D, E, F):
             else:
                 tipo = "Par de retas concorrentes"
 
+        a = float(sp.N(eq.coeff(u, 2)))
+        b = float(sp.N(eq.coeff(v, 2)))
+
         return [
             tipo,
             Q,
             λ1,
             λ2,
-            float(sp.N(eq.coeff(u, 2))),
-            float(sp.N(eq.coeff(v, 2))),
+            a,
+            b,
             f,
             auto_troca
         ]
     else:
-        if((e != 0)):
+        if((e != 0 and not auto_troca) or (abs(d) > 1e-10 and auto_troca)):
             tipo = "Parabola"
-            print(eq)
-            f = eq.subs({u: 0, v: 0})
+            f = eq.subs({u: 0, v:0})
             f = f.evalf()
     
-        else: #e == 0
+        else:
             tipo = "Par de retas paralelas"
 
-        if((abs(e) < 1e-10) and (abs(f) < 1e-10)):
+        if((((abs(e) < 1e-10) and (abs(f) < 1e-10)) and not auto_troca) or ((abs(d) < 1e-10) and (abs(f) < 1e-10) and auto_troca)):
             tipo = "Reta unica"
         
-        elif((abs(e) < 1e-10) and (λ1 * f > 0)):
+        elif((((abs(e) < 1e-10) and (λ1 * f > 0)) and not auto_troca) or ((abs(d) < 1e-10) and (λ2 * f > 0) and auto_troca)):
             tipo = "Vazio"
         
+        if(auto_troca):
+            a = float(sp.N(eq.coeff(u, 1)))
+            b = float(sp.N(eq.coeff(v, 2)))
+        else:
+            a = float(sp.N(eq.coeff(u, 2)))
+            b = float(sp.N(eq.coeff(v, 1)))
+
         return [
             tipo,
             Q,
             λ1,
             λ2,
-            float(sp.N(eq.coeff(u, 2))),
-            float(sp.N(eq.coeff(v, 1))),
+            a,
+            b,
             f,
             auto_troca
         ]

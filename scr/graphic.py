@@ -28,9 +28,6 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_t : boo
     G0 = coef_eqg[:] #[A, B, C, D, E, F]
     R = clasf_c[:] #[λ1, λ2, a, b, f]
 
-    print(R)
-    print(f"tipo: {type(R)}")
-
     #Ponto de referência da cônica. 
     ponto_ref = gf.ponto_representativo(G0[0], G0[1], G0[2], G0[3], G0[4], G0[5], tipo)
 
