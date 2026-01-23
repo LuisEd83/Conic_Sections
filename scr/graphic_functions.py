@@ -70,13 +70,7 @@ def parametrizar_conica(tipo, λ1, λ2, A, B, f, n_pts=200):
     if(tipo == "Parabola"):
         t = np.linspace(-10, 10, n_pts)
 
-        #λ1 = 0  -> A*u + B*v² + f = 0
-        if(abs(λ1) < 1e-12):
-            v = t
-            u = -(B*v*v + f)/A
-            return u, v
-
-        #λ2 = 0 -> A*u² + B*v + f = 0
+        #λ2 = 0 -> A*u² + B*v + f = 0 (sempre irá ocorrer)
         if(abs(λ2) < 1e-12):
             u = t
             v = -(A*u*u + f)/B

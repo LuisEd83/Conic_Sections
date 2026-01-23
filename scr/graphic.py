@@ -24,9 +24,12 @@ import graphic_functions as gf
 from sympy import Matrix
 from matplotlib.animation import FuncAnimation
 
-def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
+def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_t : bool):
     G0 = coef_eqg[:] #[A, B, C, D, E, F]
     R = clasf_c[:] #[λ1, λ2, a, b, f]
+
+    print(R)
+    print(f"tipo: {type(R)}")
 
     #Ponto de referência da cônica. 
     ponto_ref = gf.ponto_representativo(G0[0], G0[1], G0[2], G0[3], G0[4], G0[5], tipo)
@@ -38,9 +41,12 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
     t = np.linspace(0, 1, 200) #t ∈ [0, 1] com 200 repartições.
 
     #Definindo e tratando o ângulo:
+    Q = np.array(Q.tolist(), float)
     theta = np.arctan2(Q[1][0], Q[0][0])
     if(tipo == "Vazio"):
         theta = 0.0
+
+    print(f"Valor do ângulo: {np.degrees(theta)}")
 
     #Calculando a posição dos vetores em relação ao tempo t.
     def vectors_rot(Q : Matrix, t):
@@ -85,8 +91,18 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
         elif(abs(R[1]) < 1e-12):
             V_red = np.array([0.0, -R[4]/R[3]])
 
-    #Plotando cônica estática as coordenadas xy:
-    XY = Q @ (P - V_red.reshape(2, 1)) + ponto_ref.reshape(2, 1) #Rotaciona e translada a cônica parametrizada
+    #Plotando cônica estática as coordenadas xy com correção de ângulo:
+    alpha = theta
+    Q_co = Q
+    
+    if((G0[1] == 0) and (tipo == "Parabola") and (autova_t)):
+        alpha -= np.pi/2
+
+        #Matriz de rotação corrigida para animação: 
+        Q_co = np.array([[np.cos(alpha), -np.sin(alpha)],
+                        [np.sin(alpha), np.cos(alpha)]], float)
+
+    XY = Q_co @ (P - V_red.reshape(2, 1)) + ponto_ref.reshape(2, 1) #Rotaciona e translada a cônica parametrizada
     Xp, Yp = XY
     ax1.plot(Xp, Yp, 'b', linewidth = 1.5, zorder = 2)
 
@@ -328,24 +344,29 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str):
                     'weight': 'bold',      
                     'size': 10           
                 }) #O título será, também a classificação da Cônica
-    elif((R[0] == 0) and (R[1] != 0)):
-        ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
-              fontdict={
-                    'weight': 'bold',      
-                    'size': 10           
-                })
-    elif((R[0] != 0) and (R[1] == 0)):
-        ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v + ({R[4]:5.2f}) = 0",
-              fontdict={ 
-                    'weight': 'bold',      
-                    'size': 10           
-                })
+    else:
+        if(autova_t):
+            ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
+                fontdict={
+                        'weight': 'bold',      
+                        'size': 10           
+                    })
+        else:
+            ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v + ({R[4]:5.2f}) = 0",
+                fontdict={ 
+                        'weight': 'bold',      
+                        'size': 10           
+                    })
+            
     ax2.set_xlabel("u")
     ax2.set_ylabel("v")
     ax2.grid(True)
 
     #"Plotando" a cônica reduzida:
     #U e V já estão carregados em "U, V = parametrizar_conica(tipo_norm, R[0], R[1], R[2], R[3], R[4])"
+    if(autova_t): #Troca de eixos
+        U, V = V, U
+
     ax2.plot(U, V, 'b', linewidth=1.5, zorder=2)
     ax2.legend()
     

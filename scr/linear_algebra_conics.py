@@ -30,68 +30,9 @@ nica calculada.
 import sympy as sp
 import numpy as np
 
-from scipy import linalg
-from sympy import symbols, Matrix, pretty_print
+from sympy import symbols
 
-def completa_quadrado(expr, var):
-    #Coleta a expressão como polinômio em var
-    phi = sp.collect(expr, var, evaluate=False)
-
-    #Extração segura dos coeficientes
-    a = phi.get(var**2, 0)
-    b = phi.get(var, 0)
-    resto = phi.get(1, 0)
-
-    #Se não há termo quadrático, não há o que completar
-    if(a == 0):
-        return expr
-
-    #Completar quadrado corretamente
-    expr_completada = a*(var + b/(2*a))**2 + (resto - b**2/(4*a))
-
-    return sp.simplify(expr_completada)
-
-def completa_quadrado_conica(λ_1, λ_2, d, e, F):
-    x1, y1 = symbols("x1 y1")
-
-    #A expressão após a primeira Substituição é:
-    expr_t1 = λ_1*(x1**2) + λ_2*(y1**2) + d*x1 + e*y1 + F
-    #___Separando-a em três partes___#
-    #expr_x = λ_1*(x1**2) + d*x1
-    #expr_y = λ_2*(y1**2) + e*y1
-    #F = F
-
-    #Em relação a x
-    expr = completa_quadrado(expr_t1, var = x1)
-    #Em relação a y
-    expr = completa_quadrado(expr_t1, var = y1)
-
-    expr_t1 = expr
-    return expr_t1
-
-def correcao_parabola(expr, x, y):
-    expr = sp.expand(expr)
-
-    ax2 = expr.coeff(x, 2)
-    by2 = expr.coeff(y, 2)
-    f   = expr.subs({x: 0, y: 0})
-
-    #Caso y**2
-    if((by2 != 0) and (ax2 == 0)):
-        expr = expr - f
-        expr = sp.solve(expr, x)[0]
-        expr = x - expr
-
-    #Caso x**2
-    if((ax2 != 0) and (by2 == 0)):
-        expr = expr - f
-        expr = sp.solve(expr, y)[0]
-        expr = y - expr
-    
-    return sp.simplify(expr)
-
-
-def classificacao_conica(A,B,C,D,E,F):
+def classificacao_conica(A, B, C, D, E, F):
     """
     Esta função será responsável por classificar a cônica.
 
@@ -103,7 +44,7 @@ def classificacao_conica(A,B,C,D,E,F):
     #Primeiramente, precisamos saber se A = B = C = 0 (Que, neste contexto, não pode ocorrer)
     if ((A == 0) and (B == 0) and C == 0):
         raise ValueError("A, B e C não devem ser iguais a zero")
-
+    
     #Definindo variáveis da matriz da forma quadrática:
     tracoM = A + C
     # -> detM = A*C - (B**2)/4 <- #
@@ -112,11 +53,25 @@ def classificacao_conica(A,B,C,D,E,F):
     #Com isto, o polinômio característico será:
     #p(λ) = λ² - traxoM * λ + detM    (1)
 
+    #Definindo uma variável booleana para detectar troca de autovalores (no caso, λ1 = λm), uma vez que, a priori, λ1 = λp
+    auto_troca = False
+    
     #Calculando autovalores baseados em |λ_1| >= |λ_2| que satisfaçam (1):
-    λ_1 = (0.5)*(tracoM + sqr)
-    λ_2 = (0.5)*(tracoM - sqr)
+    λp = (0.5)*(tracoM + sqr) #λp é o λ+
+    λm = (0.5)*(tracoM - sqr) #λm é o λ_
 
-    print(f"Autovalores: ({λ_1}, {λ_2})")
+    λ1 = λ2 = 0.0 #Inicializando autovalores
+
+    if(abs(λp) >= abs(λm)):
+        λ1 = λp
+    else: 
+        λ1 = λm
+        auto_troca = True #Houve uma troca de autovalores
+
+    #Sabendo que λ1 + λ2 = tracoM:
+    λ2 = tracoM - λ1
+
+    print(f"linha 121 -> Autovalores: ({λ1}, {λ2})")
 
     #Calculando os autovetores a partir dos casos:
     #inicializando autovetores
@@ -124,27 +79,32 @@ def classificacao_conica(A,B,C,D,E,F):
 
     if(B < 0):
         #Inicializando uma constante para não haver uma poluição visual:
-        k = np.sqrt((B**2) + 4*((λ_1 - A)**2))
+        k = np.sqrt((B**2) + 4*((λ1 - A)**2))
 
         #Vetor 1:
         V1 = (-1/k) * np.array([[B],
-                                [2*(λ_1 - A)]], float)
+                                [2*(λ1 - A)]], float)
         #Vetor 2:
-        V2 = (1/k) * np.array([[2*(λ_1 - A)], 
+        V2 = (1/k) * np.array([[2*(λ1 - A)], 
                                 [-B]], float)
 
     elif(B > 0):
         #Inicializando uma constante para não haver uma poluição visual:
-        k = np.sqrt((B**2) + 4*((λ_1 - A)**2))
+        k = np.sqrt((B**2) + 4*((λ1 - A)**2))
 
         #Vetor 1:
         V1 = (1/k) * np.array([[B],
-                                [2*(λ_1 - A)]], float)
+                                [2*(λ1 - A)]], float)
         #Vetor 2:
-        V2 = (1/k) * np.array([[-2*(λ_1 - A)], 
+        V2 = (1/k) * np.array([[-2*(λ1 - A)], 
                                 [B]], float)
     else: #B == 0
         if(A >= C):
+            #Redefinindo λ1:
+            λ1 = A
+            if(A == 0):
+                λ1 = C
+        
             #Vetor 1:
             V1 = np.array([[1],
                             [0]], float)
@@ -152,6 +112,11 @@ def classificacao_conica(A,B,C,D,E,F):
             V2 = np.array([[0], 
                             [1]], float)
         else: #A < C
+            #Redefinindo λ1:
+            λ1 = C
+            if(C == 0):
+                λ1 = A
+
             #Vetor 1:
             V1 = np.array([[0],
                             [1]], float)
@@ -161,66 +126,61 @@ def classificacao_conica(A,B,C,D,E,F):
             
     #Criando a matriz Q para a realização da primeira substituição:
     Q = np.array([[V1[0, 0], V2[0, 0]],
-              [V1[1, 0], V2[1, 0]]], dtype=float)
+              [V1[1, 0], V2[1, 0]]], dtype = float)
+    print(Q)
+    #Definindo equação após [x, y] = Q@[r,s], tal que
+    #eq1 = λ1 * (r**2) + λ2 * (s**2) + d * r + e * s + F
     
-    #Realizando a substituição
-    x1, y1 = symbols("x1 y1")                   #Coordenadas da base de autovetores associados a λ_1, λ_2
-    # v = Matrix([[x],
-    #            [y]])
-    w = Matrix([[x1],
-                [y1]])                          #Nova base
-    Y = Q @ w
-    #Escreveno, primeiramente, a expressão primária:
-    x, y = symbols("x y")
-    expr = A*(x**2) + B*x*y + C*(y**2) + D*x + E*y + F
+    #Onde, definindo constantes:
+    d = D * Q[0][0] + E * Q[1][0]
+    e = D * Q[0][1] + E * Q[1][1]
 
-    #Nova Expressão
-    expr_transf1 = expr.subs({x : Y[0], y : Y[1]})
-    expr_transf1 = sp.expand(expr_transf1)
-    """
-    Após a primeira substituição, a fóruma geral será reduzida para:
-    λ_1*(x1)**2 + λ_2*(y1)**2 + d*x1 + e*y1 + F = 0
+    if(auto_troca): #Detecta troca de autovalores e, então, troca as variáveis e e d.
+        t = d
+        d = e
+        e = t
 
-    Após isso, deve-se realizar uma série de análise:
-    """
-    #Extraindo dos coeficientes que faltam (d,e) da nova expressão: 
-    d_simb = sp.expand(expr_transf1).coeff(x1, 1).subs(y1, 0)
-    e_simb = sp.expand(expr_transf1).coeff(y1, 1).subs(x1, 0)
+    print(f"Valor de d: {d}\nvalor de e: {e}")
 
-    d = float(d_simb.evalf())
-    e = float(e_simb.evalf())
+    #Inicializando equação e constante:
+    u, v = symbols("u v")
     
-    #Completando quadrado
-    expr_transf2 = completa_quadrado_conica(λ_1, λ_2, d, e, F)
-    tipo = " "
+    eq = None
+    f = 0.0
+    if(λ1*λ2 != 0):
+        #Definindo a constante f:
+        f = F - (d**2)/(4*λ1) - (e**2)/(4*λ2)
 
-    x2, y2 = symbols("x2 y2")
-    if(λ_1*λ_2 != 0):
-        #Realizando a segunda substituição:
-        expr_transf2 = expr_transf2.subs({
-            x1: (x2 - d/(2*λ_1)),
-            y1: (y2 - e/(2*λ_2))
-        })
-        expr_transf2 = sp.simplify(expr_transf2)
-        f = float(sp.N(F - (d**2)/(4*λ_1) - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
-        if((abs(λ_1 - λ_2) < 1e-10) and (f < 0)):
-            return [
-                "Circunferencia",
-                Q, 
-                λ_1,
-                λ_2,
-                float(sp.N(expr_transf2.coeff(x2, 2))),
-                float(sp.N(expr_transf2.coeff(y2, 2))),
-                f
-            ]
+        #Calculando equação:
+        eq = λ1*(u**2) + λ2*(v**2) + f
 
-        if(λ_1*λ_2 > 0):
-            if(λ_1*λ_2*f < 0):
-                #Isso implica que λ_1 e λ_2 tem sinal oposto a f
+    else: #λ1 != 0 e λ2 == 0
+        #Definindo a constante f:
+        f = F - (d**2)/(4*λ1)
+
+        #Definindo equação:
+        eq = λ1*(u**2) + e*v + f
+
+        if(e != 0): #Faz-se uma substituição.
+            #λ1*(u**2) + e*v + f -> λ1*(u**2) + e*(v + f/e) e faz v' = (v + f/e)
+            #v = (v + f/e)
+            eq = λ1*(u**2) + e*v
+            
+        #Se e == 0, não haverá substituição.
+
+    print(eq)
+    #Classificando cônica:
+    tipo = ""
+    if(λ1*λ2 != 0):
+        if((abs(λ1 - λ2) < 1e-10) and (f < 0)):
+            tipo = "Circunferencia"
+        
+        if(λ1*λ2 > 0):
+            if(λ1*λ2*f < 0): #Isso implica que λ1 e λ2 tem sinal oposto a f
                 tipo = "Elipse"
             elif(abs(f) < 1e-6):
                 tipo = "Ponto"
-            elif((λ_1*λ_2)*f > 0):
+            elif((λ1*λ2)*f > 0):
                 tipo = "Vazio"
         else:
             if(abs(f) > 1e-10):
@@ -231,79 +191,36 @@ def classificacao_conica(A,B,C,D,E,F):
         return [
             tipo,
             Q,
-            λ_1,
-            λ_2,
-            float(sp.N(expr_transf2.coeff(x2, 2))),
-            float(sp.N(expr_transf2.coeff(y2, 2))),
-            f
+            λ1,
+            λ2,
+            float(sp.N(eq.coeff(u, 2))),
+            float(sp.N(eq.coeff(v, 2))),
+            f,
+            auto_troca
         ]
-
-    elif((λ_1 == 0) and (λ_2 != 0)):
-        #Realizando a segunda substituição:
-        expr_transf2 = expr_transf2.subs({
-            x1: x2,
-            y1: (y2 - e/(2*λ_2))
-        })
-        expr_transf2 = sp.simplify(expr_transf2)
-
-        f = float(sp.N(F - (e**2)/(4*λ_2))) #Feito de forma direa para garantir o valor numérico de f
-
-        if(abs(d) > 1e-10):
+    else:
+        if((e != 0)):
             tipo = "Parabola"
-            expr_transf2 = correcao_parabola(expr_transf2, x2, y2)
-            f = expr_transf2.subs({x2: 0, y2: 0})
+            print(eq)
+            f = eq.subs({u: 0, v: 0})
             f = f.evalf()
-
-        elif((abs(d) < 1e-10) and (λ_2 * f < 0)):
-            tipo = "Par de retas paralelas"
-
-        elif((abs(d) < 1e-10) and (abs(f) < 1e-10)):
-            tipo = "Reta unica"
-        
-        if((abs(d) < 1e-10) and (λ_2 * f > 0)):
-            tipo = "Vazio"
-        
-        return [
-            tipo,
-            Q,
-            λ_1,
-            λ_2,
-            float(sp.N(expr_transf2.coeff(x2, 1))),
-            float(sp.N(expr_transf2.coeff(y2, 2))),
-            f
-        ]
-
-    elif((λ_1 != 0) and (λ_2 == 0)):
-        #Realizando a segunda substituição:
-        expr_transf2 = expr_transf2.subs({
-            x1: (x2 - d/(2*λ_1)),
-            y1: y2
-        })
-        expr_transf2 = sp.simplify(expr_transf2)
-
-        f = float(sp.N(F - (d**2)/(4*λ_1))) #Feito de forma direa para garantir o valor numérico de f
-
-        if(e != 0):
-            tipo = "Parabola"
-            expr_transf2 = correcao_parabola(expr_transf2, x2, y2)
-            f = expr_transf2.subs({x2: 0, y2: 0})
-            f = f.evalf()
-
-        else:
+    
+        else: #e == 0
             tipo = "Par de retas paralelas"
 
         if((abs(e) < 1e-10) and (abs(f) < 1e-10)):
             tipo = "Reta unica"
-
-        if((abs(e) < 1e-10) and (λ_1 * f > 0)):
+        
+        elif((abs(e) < 1e-10) and (λ1 * f > 0)):
             tipo = "Vazio"
         
         return [
             tipo,
             Q,
-            λ_1,
-            λ_2,
-            float(sp.N(expr_transf2.coeff(x2, 2))),
-            float(sp.N(expr_transf2.coeff(y2, 1))),
-            f
+            λ1,
+            λ2,
+            float(sp.N(eq.coeff(u, 2))),
+            float(sp.N(eq.coeff(v, 1))),
+            f,
+            auto_troca
         ]
