@@ -26,11 +26,8 @@ Com os objetivos concluídos, será possível plotar, em um plano cartesiano, o 
 nica calculada.
 """
 
-#Bibliotecas utilizadas
-import sympy as sp
+#Biblioteca utilizada
 import numpy as np
-
-from sympy import symbols
 
 def classificacao_conica(A, B, C, D, E, F):
     """
@@ -128,50 +125,27 @@ def classificacao_conica(A, B, C, D, E, F):
     Q = np.array([[V1[0, 0], V2[0, 0]],
               [V1[1, 0], V2[1, 0]]], dtype = float)
     
-    print(f"Matriz de rotação: {Q}")
+    print(f"Matriz de rotação:\n {Q}")
     #Definindo equação após [x, y] = Q@[r,s], tal que
-    #eq1 = λ1 * (r**2) + λ2 * (s**2) + d * r + e * s + F
+    #eq = λ1 * (r**2) + λ2 * (s**2) + d * r + e * s + F
     
     #Onde, definindo constantes:
     d = D * Q[0][0] + E * Q[1][0]
     e = D * Q[0][1] + E * Q[1][1]
-
-    #Inicializando equação e constante:
-    u, v = symbols("u v")
     
-    eq = None
     f = 0.0
     if(λ1*λ2 != 0):
         #Definindo a constante f:
         f = F - (d**2)/(4*λ1) - (e**2)/(4*λ2)
 
-        #Calculando equação:
-        eq = λ1*(u**2) + λ2*(v**2) + f
-
     else: #λ1 != 0 e λ2 == 0
-        #Definindo a constante f:
-        f = F - (d**2)/(4*λ1)
-
         if(auto_reo):
-            #Definindo equação
-            eq = λ1*(v**2) + d*u + f
-
-            if(d != 0):
-                #λ1*(v**2) + d*u + f -> λ1*(v**2) + d*(u + f/d) e faz u' = (u + f/d)
-                #u = (u + f/d)
-                eq = λ1*(v**2) + d*u
+            #Definindo a constante f:
+            f = F - (e**2)/(4*λ1)
         else:
-            #Definindo equação:
-            eq = λ1*(u**2) + e*v + f
+            #Definindo a constante f:
+            f = F - (d**2)/(4*λ1)
 
-            if(e != 0): #Faz-se uma substituição.
-                #λ1*(u**2) + e*v + f -> λ1*(u**2) + e*(v + f/e) e faz v' = (v + f/e)
-                #v = (v + f/e)
-                eq = λ1*(u**2) + e*v
-            
-        #Se e == 0, não haverá substituição.
-
-    print(f"Expressão final: {eq}")
     #Classificando cônica:
     tipo = ""
     a = b = 0.0
@@ -192,8 +166,9 @@ def classificacao_conica(A, B, C, D, E, F):
             else:
                 tipo = "Par de retas concorrentes"
 
-        a = float(sp.N(eq.coeff(u, 2)))
-        b = float(sp.N(eq.coeff(v, 2)))
+        #Coeficientes da forma padrão
+        a = λ1
+        b = λ2
 
         return [
             tipo,
@@ -208,9 +183,8 @@ def classificacao_conica(A, B, C, D, E, F):
     else:
         if((e != 0 and not auto_reo) or (abs(d) > 1e-10 and auto_reo)):
             tipo = "Parabola"
-            f = eq.subs({u: 0, v:0})
-            f = f.evalf()
-    
+            #Com s substituição, f será igual a 0
+            f = 0.0 #Garantir que a parábola da forma padrão se localize no vértice.
         else:
             tipo = "Par de retas paralelas"
 
@@ -220,12 +194,13 @@ def classificacao_conica(A, B, C, D, E, F):
         elif((((abs(e) < 1e-10) and (λ1 * f > 0)) and not auto_reo) or ((abs(d) < 1e-10) and (λ2 * f > 0) and auto_reo)):
             tipo = "Vazio"
         
+        #Coeficientes da forma padrão
         if(auto_reo):
-            a = float(sp.N(eq.coeff(u, 1)))
-            b = float(sp.N(eq.coeff(v, 2)))
+            a = d
+            b = λ1
         else:
-            a = float(sp.N(eq.coeff(u, 2)))
-            b = float(sp.N(eq.coeff(v, 1)))
+            a = λ1
+            b = e
 
         return [
             tipo,
