@@ -56,20 +56,20 @@ def classificacao_conica(A, B, C, D, E, F):
     #Definindo uma variável booleana para detectar troca de autovalores (no caso, λ1 = λm), uma vez que, a priori, λ1 = λp
     auto_reo = False
     
-    #Calculando autovalores baseados em λ1 <= λ2 que satisfaçam (1):
+    #Calculando autovalores baseados em |λ1| >= |λ2| que satisfaçam (1):
     λp = (0.5)*(tracoM + sqr) #λp é o λ+ (análogo ao λ1)
     λm = (0.5)*(tracoM - sqr) #λm é o λ_ (análogo ao λ2)
 
     λ1 = λ2 = 0.0 #Inicializando autovalores
 
-    if(λp <= λm):
-        λ2 = λm
+    if(abs(λp) > abs(λm)):
+        λ1 = λp
     else: 
-        λ2 = λp
+        λ1 = λm
         auto_reo = True #Houve uma reordenação de autovalores
 
     #Sabendo que λ1 + λ2 = tracoM:
-    λ1 = tracoM - λ1
+    λ2 = tracoM - λ1
 
     print(f"Autovalores: ({λ1}, {λ2})")
 
