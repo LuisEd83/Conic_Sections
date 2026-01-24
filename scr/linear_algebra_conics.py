@@ -42,6 +42,9 @@ def classificacao_conica(A, B, C, D, E, F):
     if ((A == 0) and (B == 0) and C == 0):
         raise ValueError("A, B e C não devem ser iguais a zero")
     
+    if((A < 0) or ((C < 0) and (A == 0)) or ((A == C) and (A == 0) and (B < 0))):#Inverte sinal caso um dos requisitos sejam cumpridos..
+        A, B, C, D, E, F = -A, -B, -C, -D, -E, -F
+    
     #Definindo variáveis da matriz da forma quadrática:
     tracoM = A + C
     # -> detM = A*C - (B**2)/4 <- #
@@ -50,18 +53,18 @@ def classificacao_conica(A, B, C, D, E, F):
     #Com isto, o polinômio característico será:
     #p(λ) = λ² - traxoM * λ + detM    (1)
 
-    #Definindo uma variável booleana para detectar troca de autovalores (no caso, λ1 = λm), uma vez que, a priori, λ1 = λp
-    auto_reo = False
-    
     #Calculando autovalores baseados em |λ1| >= |λ2| que satisfaçam (1):
     λp = (0.5)*(tracoM + sqr) #λp é o λ+ (análogo ao λ1)
     λm = (0.5)*(tracoM - sqr) #λm é o λ_ (análogo ao λ2)
 
     λ1 = λ2 = 0.0 #Inicializando autovalores
 
-    if(abs(λp) > abs(λm)):
+    #Definindo uma variável booleana para detectar troca de autovalores (no caso, para λ1 = λm), uma vez que, a priori, λ1 = λp
+    auto_reo = False
+    
+    if(abs(λp) >= abs(λm)):
         λ1 = λp
-    else: 
+    else: #|λp| < |λm|
         λ1 = λm
         auto_reo = True #Houve uma reordenação de autovalores
 

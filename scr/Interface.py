@@ -67,7 +67,10 @@ def extracao():
 
             if any(v is None for v in [A,B,C,D,E,F]):
                 raise ValueError("Valor(es) incorreto(s)!")
-            verificacao.configure(text="Variáveis aceitas!\n  Executando cálculo...", font = ("Times", 15))
+            if((A < 0) or ((C < 0) and (A == 0)) or ((A == C) and (A == 0) and (B < 0))):
+                verificacao.configure(text="Variáveis aceitas!\n  Invertendo sinal e executando cálculo...", font = ("Times", 15))
+            else:
+                verificacao.configure(text="Variáveis aceitas!\n  Executando cálculo...", font = ("Times", 15))
             window.update_idletasks()
             window.after(2000)
             window.destroy()
@@ -168,7 +171,7 @@ def extracao():
     #Label
     #Essa variável auxiliar serve para dá um pequeno espaço no topo da janela
     texto_auxiliar1 = ctk.CTkLabel(window, text = '') 
-    texto_auxiliar1.pack(pady = 5)
+    texto_auxiliar1.pack(pady = 1)
 
 
     texto_primario = ctk.CTkLabel(window, text = 'Fórmula Geral - Cônicas',
