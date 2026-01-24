@@ -21,10 +21,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import graphic_functions as gf
 
-from sympy import Matrix
 from matplotlib.animation import FuncAnimation
 
-def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_r : bool):
+def graph(coef_eqg: list, clasf_c : list, Q, tipo : str, autova_r : bool):
     G0 = coef_eqg[:] #[A, B, C, D, E, F]
     R = clasf_c[:] #[λ1, λ2, a, b, f]
 
@@ -46,7 +45,7 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_r : boo
     print(f"Valor do ângulo de rotação (em graus): {np.degrees(theta)}")
 
     #Calculando a posição dos vetores em relação ao tempo t.
-    def vectors_rot(Q : Matrix, t):
+    def vectors_rot(Q, t):
         #Ângulo de rotação:
         alpha = theta
 

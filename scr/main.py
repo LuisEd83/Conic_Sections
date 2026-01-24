@@ -16,7 +16,7 @@ Com isto será possível extrair dados, classificar e plotar a cônica.
 from Interface import extracao
 from linear_algebra_conics import classificacao_conica
 from graphic import graph
-from sympy import Matrix
+from numpy import array
 
 
 while (True):
@@ -24,8 +24,8 @@ while (True):
     A = B = C = D = E = F = None
     λ1 = λ2 = a = b = f = tipo = None
     boolean_value = autova_r = None
-    Q = Matrix([[1,0],
-                [0,1]]) #Definindo uma Matriz Q numérica
+    Q = array([[1, 0],
+                [0, 1]], float) #Definindo uma Matriz Q numérica
 
     try:
         A, B, C, D, E, F, boolean_value = extracao() #Interface
