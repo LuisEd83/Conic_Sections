@@ -336,20 +336,20 @@ def graph(coef_eqg: list, clasf_c : list, Q : Matrix, tipo : str, autova_r : boo
     ax2.axhline(0, color = 'k', linewidth = 0.5) #Determina o eixo horizontal
     ax2.axvline(0, color = 'k', linewidth = 0.5) #Determina o eixo vertical
     if(R[0]*R[1] !=0):
-        ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
+        ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v² + (0.00)u + (0.00)v + ({R[4]:5.2f}) = 0",
               fontdict={
                     'weight': 'bold',      
                     'size': 10           
                 }) #O título será, também a classificação da Cônica
     else:
         if(autova_r):
-            ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u + ({R[3]:5.2f})v² + ({R[4]:5.2f}) = 0",
+            ax2.set_title(f"Forma Padrão \n {tipo} \n (0.00)u² + ({R[3]:5.2f})v² + ({R[2]:5.2f})u + (0.00)v + ({R[4]:5.2f}) = 0",
                 fontdict={
                         'weight': 'bold',      
                         'size': 10           
                     })
         else:
-            ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + ({R[3]:5.2f})v + ({R[4]:5.2f}) = 0",
+            ax2.set_title(f"Forma Padrão \n {tipo} \n ({R[2]:5.2f})u² + (0.00)v² + (0.00)u + ({R[3]:5.2f})v + ({R[4]:5.2f}) = 0",
                 fontdict={ 
                         'weight': 'bold',      
                         'size': 10           
