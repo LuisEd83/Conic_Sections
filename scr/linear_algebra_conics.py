@@ -68,6 +68,7 @@ def classificacao_conica(A, B, C, D, E, F):
     #Sabendo que λ1 + λ2 = tracoM:
     λ2 = tracoM - λ1
 
+    print(f"Autovalores análogos: ({λp}, {λm})")
     print(f"Autovalores: ({λ1}, {λ2})")
 
     #Calculando os autovetores a partir dos casos:
@@ -97,11 +98,6 @@ def classificacao_conica(A, B, C, D, E, F):
                                 [B]], float)
     else: #B == 0
         if(A >= C):
-            #Redefinindo λ1:
-            λ1 = A
-            if(A == 0):
-                λ1 = C
-        
             #Vetor 1:
             V1 = np.array([[1],
                             [0]], float)
@@ -109,11 +105,6 @@ def classificacao_conica(A, B, C, D, E, F):
             V2 = np.array([[0], 
                             [1]], float)
         else: #A < C
-            #Redefinindo λ1:
-            λ1 = C
-            if(C == 0):
-                λ1 = A
-
             #Vetor 1:
             V1 = np.array([[0],
                             [1]], float)
@@ -133,7 +124,9 @@ def classificacao_conica(A, B, C, D, E, F):
     d = D * Q[0][0] + E * Q[1][0]
     e = D * Q[0][1] + E * Q[1][1]
     
-    f = 0.0
+    print(f"Valor de d: {d}\nValor de e: {e}")
+
+    f = 0.0 #Inicializando constante da forma padrão
     if(λ1*λ2 != 0):
         #Definindo a constante f:
         f = F - (d**2)/(4*λ1) - (e**2)/(4*λ2)

@@ -360,7 +360,7 @@ def graph(coef_eqg: list, clasf_c : list, Q, tipo : str, autova_r : bool):
 
     #"Plotando" a cônica reduzida:
     #U e V já estão carregados em "U, V = parametrizar_conica(tipo_norm, R[0], R[1], R[2], R[3], R[4])"
-    if(autova_r): #Troca de eixos
+    if((autova_r) and (tipo == "Parabola")): #Troca de eixos
         U, V = V, U
 
     ax2.plot(U, V, 'b', linewidth=1.5, zorder=2)
