@@ -40,3 +40,14 @@ while (True):
     coef_eqg = [A, B, C, D, E, F] #Coeficientes da equação geral
     clasf_c = [λ1, λ2, a, b, f] #Variáveis necessárias para plotar a quação reduzida
     graph(coef_eqg, clasf_c, Q, tipo, autova_r)
+
+    with open("scr/results.txt", "w", encoding="utf-8") as arq:
+        arq.write(f"Equacao digitada pelo usuario: ({A:5.4f})x² + ({B:5.4f})xy + ({C:5.4f})y² + ({D:5.4f})x + ({E:5.4f})y + ({F:5.4f}) = 0" + '\n')
+        arq.write(f"Autovalores calculados: λ1 = {λ1:5.4f}, λ2 = {λ2:5.4f}" + '\n')
+        arq.write(f"Autovetores calculados: V1 = ({Q[0][0]:5.4f}, {Q[1][0]:5.4f}), V2 = ({Q[0][1]:5.4f}, {Q[1][1]:5.4f})" + '\n')
+        if(λ1*λ2 != 0):
+            arq.write(f"Equacao da Forma Padrao: ({λ1:5.4f})x² + ({λ2:5.4f})y² + ({f:5.4f}) = 0")
+        elif(autova_r):
+            arq.write(f"Equacao da Forma Padrao: ({a:5.4f})x + ({b:5.4f})y² + ({f:5.4f}) = 0")
+        else:
+            arq.write(f"Equacao da Forma Padrao: ({a:5.4f})x² + ({b:5.4f})y + ({f:5.4f}) = 0")

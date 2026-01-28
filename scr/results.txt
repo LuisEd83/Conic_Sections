@@ -1,0 +1,4 @@
+Equacao digitada pelo usuario: (-1.0000)x² + (0.0000)xy + (1.0000)y² + (0.0000)x + (0.0000)y + (-1.0000) = 0
+Autovalores calculados: λ1 = 1.0000, λ2 = -1.0000
+Autovetores calculados: V1 = (1.0000, 0.0000), V2 = (0.0000, 1.0000)
+Equacao da Forma Padrao: (1.0000)x² + (-1.0000)y² + (1.0000) = 0

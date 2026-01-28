@@ -71,9 +71,6 @@ def classificacao_conica(A, B, C, D, E, F):
     #Sabendo que λ1 + λ2 = tracoM:
     λ2 = tracoM - λ1
 
-    print(f"Autovalores análogos: ({λp}, {λm})")
-    print(f"Autovalores: ({λ1}, {λ2})")
-
     #Calculando os autovetores a partir dos casos:
     #inicializando autovetores
     V1 = V2 = [0.0, 0.0] #Vetores nulos
@@ -126,8 +123,6 @@ def classificacao_conica(A, B, C, D, E, F):
     #Onde, definindo constantes:
     d = D * Q[0][0] + E * Q[1][0]
     e = D * Q[0][1] + E * Q[1][1]
-    
-    print(f"Valor de d: {d}\nValor de e: {e}")
 
     f = 0.0 #Inicializando constante da forma padrão
     if(λ1*λ2 != 0):
