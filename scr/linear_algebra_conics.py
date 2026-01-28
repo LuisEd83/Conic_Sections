@@ -29,6 +29,26 @@ nica calculada.
 #Biblioteca utilizada
 import numpy as np
 
+
+def salvar_arquivo(A, B, C, D, E, F, λ1, λ2, Q, d, e ,a, b, f, auto_reo):
+    with open("scr/results.txt", "w", encoding="utf-8") as arq:
+        arq.write(f"# -- Equacao digitada pelo usuario -- #\n ({A:5.4f})x² + ({B:5.4f})xy + ({C:5.4f})y² + ({D:5.4f})x + ({E:5.4f})y + ({F:5.4f}) = 0" + '\n\n')
+        arq.write(f"# -- Matriz da forma quadrática -- #\n M = [({A}, {B/2}\n       {B/2}, {C})]" + '\n\n')
+        arq.write(f"# -- Invariantes da matriz e sqrDelta (bhaskara) -- #\n TracoM = {A + C}\n detM = {A*C - (B**2)/4}\n sqrDelta = {np.sqrt((A - C)**2 + B**2)}" + '\n\n')
+        arq.write(f"# -- Autovalores calculados -- #\n λ1 = {λ1:5.4f}, λ2 = {λ2:5.4f}" + '\n\n')
+        arq.write(f"# -- Autovetores calculados -- #\n V1 = [({Q[0][0]:5.4f},\n        {Q[1][0]:5.4f})]\n\n V2 = [({Q[0][1]:5.4f},\n        {Q[1][1]:5.4f})]" + '\n\n')
+        arq.write(f"# -- Matriz de rotação -- #\n Q = [({Q[0][0]:5.4f}, {Q[0][1]:5.4f}\n       {Q[1][0]:5.4f}, {Q[1][1]:5.4f})]" + '\n\n')
+        arq.write(f"# -- Ângulo de rotação (em graus) -- #\n theta = {np.degrees(np.arctan2(Q[1][0], Q[0][0]))}" + '\n\n')
+        arq.write(f"# -- Coeficientes das variáveis não quadráticas da equação após rotação -- #\n d = {d:5.4f}, e = {e:5.4f}" + '\n\n')
+        arq.write(f"# -- Equação rotacationada -- #\n ({λ1:5.4f})r² + ({λ2:5.4f})s² + ({d:5.4f})r + ({e:5.4f})s + ({f:5.4f}) = 0" + '\n\n')
+        if(λ1*λ2 != 0):
+            arq.write(f"# -- Equacao na Forma Padrao -- #\n ({λ1:5.4f})u² + ({λ2:5.4f})v² + ({f:5.4f}) = 0")
+        elif(auto_reo):
+            arq.write(f"# -- Equacao na Forma Padrao -- #\n ({a:5.4f})u + ({b:5.4f})v² + ({f:5.4f}) = 0")
+        else:
+            arq.write(f"# -- Equacao na Forma Padrao -- #\n ({a:5.4f})u² + ({b:5.4f})v + ({f:5.4f}) = 0")
+
+
 def classificacao_conica(A, B, C, D, E, F):
     """
     Esta função será responsável por classificar a cônica.
@@ -41,9 +61,6 @@ def classificacao_conica(A, B, C, D, E, F):
     #Primeiramente, precisamos saber se A = B = C = 0 (Que, neste contexto, não pode ocorrer)
     if ((A == 0) and (B == 0) and C == 0):
         raise ValueError("A, B e C não devem ser iguais a zero")
-    
-    if((A < 0) or ((C < 0) and (A == 0)) or ((A == C) and (A == 0) and (B < 0))):#Inverte sinal caso um dos requisitos sejam cumpridos..
-        A, B, C, D, E, F = -A, -B, -C, -D, -E, -F
     
     #Definindo variáveis da matriz da forma quadrática:
     tracoM = A + C
@@ -116,7 +133,6 @@ def classificacao_conica(A, B, C, D, E, F):
     Q = np.array([[V1[0, 0], V2[0, 0]],
               [V1[1, 0], V2[1, 0]]], dtype = float)
     
-    print(f"Matriz de rotação:\n {Q}")
     #Definindo equação após [x, y] = Q@[r,s], tal que
     #eq = λ1 * (r**2) + λ2 * (s**2) + d * r + e * s + F
     
@@ -161,6 +177,7 @@ def classificacao_conica(A, B, C, D, E, F):
         a = λ1
         b = λ2
 
+        salvar_arquivo(A, B, C, D, E, F, λ1, λ2, Q, d, e, a, b, f, auto_reo)
         return [
             tipo,
             Q,
@@ -193,6 +210,7 @@ def classificacao_conica(A, B, C, D, E, F):
             a = λ1
             b = e
 
+        salvar_arquivo(A, B, C, D, E, F, λ1, λ2, Q, d, e, a, b, f, auto_reo)
         return [
             tipo,
             Q,

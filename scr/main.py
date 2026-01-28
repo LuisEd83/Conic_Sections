@@ -29,6 +29,11 @@ while (True):
 
     try:
         A, B, C, D, E, F, boolean_value = extracao() #Interface
+
+        if((A < 0) or ((C < 0) and (A == 0)) or ((A == C) and (A == 0) and (B < 0))):#Inverte sinal caso um dos requisitos sejam cumpridos..
+            A, B, C, D, E, F = -A, -B, -C, -D, -E, -F
+            print("Os sinais foram invertidos.")
+
         tipo, Q, λ1, λ2, a, b, f, autova_r = classificacao_conica(A, B, C, D, E, F) #Classificação da cônica
     except ValueError as VE:
         print(f"Erro: {VE}")
@@ -40,14 +45,3 @@ while (True):
     coef_eqg = [A, B, C, D, E, F] #Coeficientes da equação geral
     clasf_c = [λ1, λ2, a, b, f] #Variáveis necessárias para plotar a quação reduzida
     graph(coef_eqg, clasf_c, Q, tipo, autova_r)
-
-    with open("scr/results.txt", "w", encoding="utf-8") as arq:
-        arq.write(f"# -- Equacao digitada pelo usuario -- #\n ({A:5.4f})x² + ({B:5.4f})xy + ({C:5.4f})y² + ({D:5.4f})x + ({E:5.4f})y + ({F:5.4f}) = 0" + '\n\n')
-        arq.write(f"# -- Autovalores calculados -- #\n λ1 = {λ1:5.4f}, λ2 = {λ2:5.4f}" + '\n\n')
-        arq.write(f"# -- Autovetores calculados -- #\n V1 = [({Q[0][0]:5.4f},\n        {Q[1][0]:5.4f})]\n\n V2 = [({Q[0][1]:5.4f},\n        {Q[1][1]:5.4f})]" + '\n\n')
-        if(λ1*λ2 != 0):
-            arq.write(f"# -- Equacao da Forma Padrao -- #\n ({λ1:5.4f})x² + ({λ2:5.4f})y² + ({f:5.4f}) = 0")
-        elif(autova_r):
-            arq.write(f"# -- Equacao da Forma Padrao -- #\n ({a:5.4f})x + ({b:5.4f})y² + ({f:5.4f}) = 0")
-        else:
-            arq.write(f"# -- Equacao da Forma Padrao -- #\n ({a:5.4f})x² + ({b:5.4f})y + ({f:5.4f}) = 0")

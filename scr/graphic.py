@@ -42,8 +42,6 @@ def graph(coef_eqg: list, clasf_c : list, Q, tipo : str, autova_r : bool):
     if(tipo == "Vazio"):
         theta = 0.0
 
-    print(f"Valor do ângulo de rotação (em graus): {np.degrees(theta)}")
-
     #Calculando a posição dos vetores em relação ao tempo t.
     def vectors_rot(Q, t):
         #Ângulo de rotação:

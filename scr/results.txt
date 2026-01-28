@@ -1,4 +1,37 @@
-Equacao digitada pelo usuario: (-1.0000)x² + (0.0000)xy + (1.0000)y² + (0.0000)x + (0.0000)y + (-1.0000) = 0
-Autovalores calculados: λ1 = 1.0000, λ2 = -1.0000
-Autovetores calculados: V1 = (1.0000, 0.0000), V2 = (0.0000, 1.0000)
-Equacao da Forma Padrao: (1.0000)x² + (-1.0000)y² + (1.0000) = 0
+# -- Equacao digitada pelo usuario -- #
+ (2.0000)x² + (4.0000)xy + (2.0000)y² + (5.6569)x + (16.9706)y + (-8.0000) = 0
+
+# -- Matriz da forma quadrática -- #
+ M = [(2.0, 2.0
+       2.0, 2.0)]
+
+# -- Invariantes da matriz e sqrDelta (bhaskara) -- #
+ TracoM = 4.0
+ detM = 0.0
+ sqrDelta = 4.0
+
+# -- Autovalores calculados -- #
+ λ1 = 4.0000, λ2 = 0.0000
+
+# -- Autovetores calculados -- #
+ V1 = [(0.7071,
+        0.7071)]
+
+ V2 = [(-0.7071,
+        0.7071)]
+
+# -- Matriz de rotação -- #
+ Q = [(0.7071, -0.7071
+       0.7071, 0.7071)]
+
+# -- Ângulo de rotação (em graus) -- #
+ theta = 45.0
+
+# -- Coeficientes das variáveis não quadráticas da equação após rotação -- #
+ d = 16.0000, e = 8.0000
+
+# -- Equação rotacationada -- #
+ (4.0000)r² + (0.0000)s² + (16.0000)r + (8.0000)s + (0.0000) = 0
+
+# -- Equacao na Forma Padrao -- #
+ (4.0000)u² + (8.0000)v + (0.0000) = 0
